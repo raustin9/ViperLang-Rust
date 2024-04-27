@@ -1,4 +1,5 @@
 use std::{ffi::OsStr, path::PathBuf, sync::Arc};
+use colored::*;
 
 use crate::source::{SourceFile, SourceModule};
 
@@ -8,7 +9,7 @@ pub struct BuildSystem {
     path: PathBuf,
 
     /// List of pointers to source code files
-    modules: Arc<[Arc<SourceModule>]>,
+    modules: Vec<Arc<SourceModule>>,
 }
 
 /*
@@ -27,23 +28,39 @@ pub struct BuildSystem {
 
 impl BuildSystem {
     pub fn new(path: PathBuf) -> BuildSystem {
-        let module = SourceModule::new(&path);
+        let module = Arc::new(SourceModule::new(&path));
 
 
         BuildSystem {
             path,
-            modules: Arc::new([Arc::new(module)])
+            modules: vec![module],
         }
     }
 
     /// TODO: Build system for packages
     pub fn build_project(&self) {
-        
+        for module in &self.modules {
+            println!("{}", format!("Compiling: {module}").bright_cyan());
+            self.build_module(module);
+        }
+    }
+
+    /// Build a module from the source code files in it
+    pub fn build_module(&self, module: &Arc<SourceModule>) {
+        for file in module.files() {
+            self.compile_file(file);
+        }
     }
 
     /// Fully compile a source code file
-    pub fn compile_file(&self, _file: Arc<SourceFile>) {
-        
+    pub fn compile_file(&self, file: &Arc<SourceFile>) {
+        println!(
+            "{}",
+            format!(" -- Compiling file: {}", 
+                file.name().as_path().display()
+            )
+            .bright_green()
+        );
     }
 
 }

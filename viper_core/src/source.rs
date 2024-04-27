@@ -46,11 +46,13 @@ impl SourceModule {
             // files: Vec::new()
         };
 
-        for file in &module.files {
-            println!("Module file: {file}");
-        }
-
         return module;
+    }
+
+    /// Get a reference to the list of source code files 
+    /// for this module
+    pub fn files(&self) -> &Vec<Arc<SourceFile>> {
+        return &self.files;
     }
 
     /// Go through the directory for this module and 
@@ -77,8 +79,18 @@ impl SourceModule {
     }
 }
 
+impl fmt::Display for SourceModule {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Module name: {}. Number of files: {}"
+            , self.name
+            , self.files.len()
+        )
+    }
+}
+
 
 impl SourceFile {
+    /// Create a new source code file from the specified path
     pub fn new(path: PathBuf) -> Result<SourceFile, VError> {
         let contents = fs::read_to_string(path.clone());
 
