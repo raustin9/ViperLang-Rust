@@ -1,0 +1,12 @@
+[package]
+name = "viper_driver"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+viper_core = { path = "../viper_core" }
+viper_lexer = { path = "../viper_lexer" }
+lazy_static = { workspace = true }
+clap = { workspace = true }

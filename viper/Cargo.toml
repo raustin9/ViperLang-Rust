@@ -1,0 +1,11 @@
+[package]
+name = "viper"
+version.workspace = true
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+viper_driver = { path = "../viper_driver" }

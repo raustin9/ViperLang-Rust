@@ -1,0 +1,15 @@
+[package]
+name = "viper_core"
+version.workspace = true
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+strum = { workspace = true }
+strum_macros = { workspace = true }
+lazy_static = { workspace = true }
+thiserror = { workspace = true } 
+colored = { workspace = true }

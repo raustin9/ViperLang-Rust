@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+
+members = [ 
+    "viper"
+    , "viper_allocator" 
+    , "viper_core"
+    , "viper_driver"
+    , "viper_lexer"
+]
+
+[workspace.dependencies]
+lazy_static = "1.4.0"
+strum = "0.25.0"
+strum_macros = "0.25"
+
+[workspace.package]
+version = "0.1.0"
+description = "The Viper programming language!"
