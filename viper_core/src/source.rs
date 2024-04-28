@@ -13,9 +13,10 @@ pub struct SourceLocation {
 }
 
 /// Represents a source code file
-#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SourceFile {
-    source_code: String,
+    source_code: Arc<[u8]>,
+    // source_code: String,
     source_name: PathBuf,
 }
 
@@ -97,7 +98,7 @@ impl SourceFile {
         match contents {
             Ok(content) => {
                 return Ok(SourceFile {
-                    source_code: content,
+                    source_code: Arc::from(content.as_bytes()),
                     source_name: path,
                 });
             },
@@ -105,6 +106,11 @@ impl SourceFile {
                 return Err(IoError::new("Unable to read from file!"));
             }
         };
+    }
+
+    /// Get a reference to the source code of the file
+    pub fn code(&self) -> &Arc<[u8]> {
+        return &self.source_code;
     }
 
     /// Get the PathBuf or filepath to the source code file
@@ -115,7 +121,7 @@ impl SourceFile {
 
 impl fmt::Display for SourceFile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Name: {}\nContent:\n{}", self.source_name.to_path_buf().display(), self.source_code.green())
+        write!(f, "Name: {}\nContent:\n{}", self.source_name.to_path_buf().display(), std::str::from_utf8(&self.source_code).unwrap().green())
     }
 }
 

@@ -1,7 +1,8 @@
 use std::{ffi::OsStr, path::PathBuf, sync::Arc};
 use colored::*;
+use viper_core::source::{SourceFile, SourceModule};
 
-use crate::source::{SourceFile, SourceModule};
+use viper_lexer::lexer::Lexer;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct BuildSystem {
@@ -61,8 +62,10 @@ impl BuildSystem {
             )
             .bright_green()
         );
-    }
 
+        let lexer = Lexer::new(file);
+        lexer.print_test();
+    }
 }
 
 

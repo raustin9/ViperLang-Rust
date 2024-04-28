@@ -4,6 +4,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use thiserror::Error;
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub enum TokenKind {
     Illegal,
     Identifier(String),

@@ -10,3 +10,4 @@ viper_core = { path = "../viper_core" }
 viper_lexer = { path = "../viper_lexer" }
 lazy_static = { workspace = true }
 clap = { workspace = true }
+colored = { workspace = true }

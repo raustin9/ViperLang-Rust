@@ -1,6 +1,7 @@
 use std::{path::PathBuf, process::ExitCode};
 pub use clap::Parser;
-use viper_core::buildsystem::BuildSystem;
+use crate::buildsystem::BuildSystem;
+// use viper_core::buildsystem::BuildSystem;
 
 /// Command line argument to the compiler for what file we want to compile
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Hash, clap::Parser)]
