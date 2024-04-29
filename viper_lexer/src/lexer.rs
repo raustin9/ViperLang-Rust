@@ -15,22 +15,26 @@ pub struct Lexer<'a> {
 
 impl<'a> Lexer<'a> {
     pub fn new(source: &'a Arc<SourceFile>) -> Lexer {
-        // let it = source.code().chars().peekable();
-        Lexer {
+        let mut it = source.code().chars().peekable();
+        let c = it.next().unwrap();
+        let l = Lexer {
             source_file: source,
-            code_iterator: source.code().chars().peekable(),
+            code_iterator: it,
             line_number: 1,
             column: 1,
-            current_char: source.code().chars().next().unwrap(),
+            current_char: c,
             position: 0,
-        }
+        };
+    
+        return l;
     }
 
     /// Read either a token for a specified keyword,
     /// and if it is not a valid keyword then it 
     /// is an identifier
     pub fn read_identifier(&mut self) -> Token {
-        let start_position = self.position;
+        // println!("Lexer reading identifier");
+        let start_position = self.position.clone();
 
         while char::is_alphabetic(self.current_char) {
             self.read_char();
@@ -39,11 +43,13 @@ impl<'a> Lexer<'a> {
         let s = self.source_file.code().substring(start_position, self.position);
         match KeywordKind::from_str(s) {
             Ok(kind) => {
+                // println!("Done.");
                 return Token::Keyword(Keyword {
                     kind
                 });
             }
             Err(ref _err) => {
+                // println!("Done.");
                 return Token::Identifier { literal: String::from(s) };
             }
         }
@@ -84,35 +90,59 @@ impl<'a> Lexer<'a> {
     /// Eat whitespace characters until we get to a non-whitespace 
     /// one in the source code input
     pub fn skip_whitespace(&mut self) {
-        loop {
-            match char::is_whitespace(self.current_char) {
-                true => {
-                    if self.current_char == '\n' {
-                        self.line_number += 1;
-                        self.column = 1;
-                    }
-
-                    self.read_char();
-                }
-
-                false => return,
+        // println!("skipping whitespace");
+        while  self.current_char == '\n'
+                || self.current_char == '\r'
+                || self.current_char == '\t'
+                || self.current_char == ' ' 
+        {
+            if self.current_char == '\n' {
+                self.line_number += 1;
             }
+            // println!("skipping '{}'", self.current_char);
+            self.read_char();
         }
+        // println!("Done.");
     }
+    //            loop {
+    //            match char::is_whitespace(self.current_char) {
+    //                true => {
+    //                    if self.current_char == '\n' {
+    //                        self.line_number += 1;
+    //                        self.column = 1;
+    //                    }
+    //
+    //                    self.read_char();
+    //                }
+    //
+    //                false => return,
+    //            }
+    //        }
 
 
     /// Eat a character and incriment proper values
     fn read_char(&mut self) {
-        match self.code_iterator.next() {
-            Some(c) => {
-                self.current_char = c;
-                self.column += 1;
-                self.position += 1;
-            }
-            None => {
-                self.current_char = '\0';
-            }
+        if self.code_iterator.peek().is_none() {
+            self.current_char = '\0';
+        } else {
+            // println!("Read char current: '{}'", self.current_char);
+            self.current_char = self.code_iterator.next().unwrap();
+            // println!("Read char eaten: '{}'", self.current_char);
+            // self.current_char = c.clone();
+            self.column += 1;
+            self.position += 1;
         }
+//        match self.code_iterator.next() {
+//            Some(c) => {
+//                println!("Lexer reading: '{}'", c.clone());
+//                self.current_char = c.clone();
+//                self.column += 1;
+//                self.position += 1;
+//            }
+//            None => {
+//                self.current_char = '\0';
+//            }
+//        }
     }
 
     /// Peek ahead to the next character without 
@@ -386,11 +416,13 @@ impl<'a> Lexer<'a> {
                     tok = self.read_number();
                 } else if char::is_alphabetic(self.current_char) {
                     tok = self.read_identifier();
+                    return tok;
                 } else {
                     tok = Token::Illegal;
                 }
             }
         }
+        self.read_char();
 
         return tok;
     }

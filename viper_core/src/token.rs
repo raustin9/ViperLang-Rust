@@ -1,9 +1,10 @@
 use lazy_static::lazy_static;
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap, fmt::Display, str::FromStr};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use thiserror::Error;
 
+#[derive(Clone, PartialEq)]
 pub enum Token {
     Keyword(Keyword),
     Punctuator(Punctuator),
@@ -12,6 +13,35 @@ pub enum Token {
     Identifier {literal: String},
     Illegal,
     EOF,
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Keyword(keyword) => {
+                write!(f, "{}", keyword)
+            }
+            Self::Punctuator(punctuator) => {
+                write!(f, "{}", punctuator)
+            }
+            Self::Numeric(numeric) => {
+                write!(f, "{}", numeric)
+            }
+            Self::StringLiteral(string_literal) => {
+                write!(f, "{}", string_literal)
+            }
+            Self::Identifier { literal } => {
+                write!(f, "Identifier: '{}'", literal)
+            }
+            Self::Illegal => {
+                write!(f, "Illegal")
+            }
+            Self::EOF => {
+                write!(f, "EOF")
+
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter)]
@@ -166,9 +196,6 @@ pub enum PunctuatorKind {
     Semicolon,
 }
 
-impl Punctuator {
-}
-
 impl PunctuatorKind {
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -219,26 +246,89 @@ impl PunctuatorKind {
 
 /// Represents a string literal
 /// "string literal"
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct StringLiteral {
-    _literal: String,
+    literal: String,
+}
+
+/// Display the StringLiteral struct
+impl Display for StringLiteral {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "String Literal: '{}'", self.literal)
+    }
 }
 
 /// Token type for keywords in Viper
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct Keyword {
     pub kind: KeywordKind,
 }
 
+impl Display for Keyword {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Keyword: '{}'", self.kind.as_str())
+    }
+}
+
 /// Token type for punctuation in Viper
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct Punctuator {
     pub value: String,
     pub kind: PunctuatorKind,
     pub precedence: Option<OperatorPrecedence>,
 }
 
+/// Display for operator precedences
+impl Display for OperatorPrecedence {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+/// Implementation for operator precedences
+impl OperatorPrecedence {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Lowest => return "Lowest",
+            Self::Assign => return "Assign",
+            Self::LogicalAndOr => return "LogicalAndOr",
+            Self::Comparison => return "Comparison",
+            Self::AddSub => return "AddSub",
+            Self::MulDivMod => return "MulDivMod",
+            Self::Bitshift => return "Bitshift",
+            Self::Prefix => return "Prefix",
+        }
+    }
+}
+
+/// Display the Punctuator token
+impl Display for Punctuator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.precedence {
+            Some(ref prec) => {
+                write!(f, "Punctuator: kind - {}. Precedence: {}", self.kind.as_str(), prec)
+            }
+            None => {
+                write!(f, "Punctuator: kind - {}. Precedence: None", self.kind.as_str())
+            }
+        }
+    }
+}
+
 /// Token type for numeric literals
+#[derive(Clone, PartialEq)]
 pub enum Numeric {
     Integer{value: u64},
     FloatingPoint{value: f64},
+}
+
+impl Display for Numeric {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Integer { value } => write!(f, "Integer: '{}'", value),
+            Self::FloatingPoint { value } => write!(f, "Integer: '{}'", value),
+        }
+    }
 }
 
 

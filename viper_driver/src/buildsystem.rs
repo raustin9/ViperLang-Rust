@@ -1,6 +1,6 @@
 use std::{ffi::OsStr, fs, path::PathBuf, sync::Arc};
 use colored::*;
-use viper_core::source::{SourceFile, SourceModule};
+use viper_core::{source::{SourceFile, SourceModule}, token::Token};
 
 use viper_lexer::lexer::Lexer;
 
@@ -106,11 +106,20 @@ impl BuildSystem {
             .bright_green()
         );
 
-        let lexer = Lexer::new(file);
-        lexer.print_test();
+        let mut lexer = Lexer::new(file);
+        let mut tok = lexer.next_token();
+        while tok != Token::EOF {
+            println!(
+                "{}",
+                format!("Test Token1: {}", tok).bright_white()
+            );
+            tok = lexer.next_token();
+        }
     }
 }
 
+/// Determine if a specified path points to a directory 
+/// or a file
 fn path_is_directory(path: &PathBuf) -> bool {
     match fs::metadata(path) {
         Ok(ref md) => {
