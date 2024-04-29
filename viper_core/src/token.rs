@@ -4,22 +4,14 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use thiserror::Error;
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-pub enum TokenKind {
-    Illegal,
-    Identifier(String),
-    Keyword(String),
-    Operator(String),
-    LiteralConstant,
-    StringLiteral,
-    EOF,
-}
-
 pub enum Token {
     Keyword(Keyword),
     Punctuator(Punctuator),
     Numeric(Numeric),
     StringLiteral(StringLiteral),
+    Identifier {literal: String},
+    Illegal,
+    EOF,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter)]
@@ -105,10 +97,23 @@ impl KeywordKind {
     }
 }
 
+/// Operator precedences for binding expressions
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter, Default)]
+pub enum OperatorPrecedence {
+    #[default]
+    Lowest = 0,
+    Assign,
+    LogicalAndOr,
+    Comparison,
+    AddSub,
+    MulDivMod,
+    Bitshift,
+    Prefix,
+}
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter)]
 pub enum PunctuatorKind {
-    
     /// Operators
     Plus,
     Minus,
@@ -119,6 +124,7 @@ pub enum PunctuatorKind {
     Tilde,
     Caret,
     Ampersand,
+    Pipe,
 
     LShift,
     RShift,
@@ -160,6 +166,9 @@ pub enum PunctuatorKind {
     Semicolon,
 }
 
+impl Punctuator {
+}
+
 impl PunctuatorKind {
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -172,6 +181,7 @@ impl PunctuatorKind {
             Self::Tilde => return "~",
             Self::Caret => return "^",
             Self::Ampersand => return "&",
+            Self::Pipe => return "|",
             Self::LShift => return "<<",
             Self::RShift => return ">>",
             Self::EqualTo => return "==",
@@ -222,12 +232,13 @@ pub struct Keyword {
 pub struct Punctuator {
     pub value: String,
     pub kind: PunctuatorKind,
-    pub precedence: u16,
+    pub precedence: Option<OperatorPrecedence>,
 }
 
 /// Token type for numeric literals
-pub struct Numeric {
-    pub value: u64,
+pub enum Numeric {
+    Integer{value: u64},
+    FloatingPoint{value: f64},
 }
 
 
@@ -259,6 +270,7 @@ impl FromStr for KeywordKind {
     }
 }
 
+#[derive(Debug)]
 pub struct PunctuatorLexerError;
 
 impl FromStr for PunctuatorKind {
@@ -278,5 +290,42 @@ impl FromStr for PunctuatorKind {
         };
 
         return OPERATOR_STRING_MAP.get(s).copied().ok_or(PunctuatorLexerError);
+    }
+}
+
+impl FromStr for Punctuator {
+    type Err = PunctuatorLexerError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let kind = PunctuatorKind::from_str(s).unwrap();
+        let prec = match kind {
+            PunctuatorKind::Plus | PunctuatorKind::Minus => {
+                Some(OperatorPrecedence::AddSub)
+            }
+            PunctuatorKind::Mod | PunctuatorKind::Star | PunctuatorKind::Slash => {
+                Some(OperatorPrecedence::MulDivMod)
+            }
+            PunctuatorKind::RShift | PunctuatorKind::LShift  | 
+            PunctuatorKind::Caret | PunctuatorKind::Ampersand | 
+            PunctuatorKind::Pipe => {
+                Some(OperatorPrecedence::Bitshift)
+            }
+            PunctuatorKind::Bang | PunctuatorKind::Tilde => {
+                Some(OperatorPrecedence::Prefix)
+            }
+            PunctuatorKind::LessThan | PunctuatorKind::GreaterThan |
+            PunctuatorKind::LessThanEQ | PunctuatorKind::GreaterThanEQ |
+            PunctuatorKind::EqualTo | PunctuatorKind::NotEqualTo => {
+                Some(OperatorPrecedence::Comparison)
+            }
+            _ => {
+                None
+            }
+        };
+
+        return Ok(Punctuator {
+            kind,
+            precedence: prec,
+            value: String::from(s)
+        });
     }
 }

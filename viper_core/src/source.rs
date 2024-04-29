@@ -15,7 +15,8 @@ pub struct SourceLocation {
 /// Represents a source code file
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SourceFile {
-    source_code: Arc<[u8]>,
+    // source_code: Arc<[u8]>,
+    source_code: Arc<str>,
     // source_code: String,
     source_name: PathBuf,
 }
@@ -66,11 +67,11 @@ impl SourceModule {
         //       a source code file. This is not going to hold for 
         //       long because we want submodules with subdirectories
         for path in paths {
-            println!("Path: {}", 
-                path.as_ref()
-                    .unwrap()
-                    .path()
-                    .display());
+//            println!("Path: {}", 
+//                path.as_ref()
+//                    .unwrap()
+//                    .path()
+//                    .display());
             
             let f = Arc::new(SourceFile::new(path.unwrap().path()).unwrap());
             files.push(f);
@@ -98,7 +99,8 @@ impl SourceFile {
         match contents {
             Ok(content) => {
                 return Ok(SourceFile {
-                    source_code: Arc::from(content.as_bytes()),
+                    source_code: Arc::from(content),
+                    // source_code: Arc::from(content.as_bytes()),
                     source_name: path,
                 });
             },
@@ -109,7 +111,8 @@ impl SourceFile {
     }
 
     /// Get a reference to the source code of the file
-    pub fn code(&self) -> &Arc<[u8]> {
+    pub fn code(&self) -> &Arc<str> {
+    // pub fn code(&self) -> &Arc<[u8]> {
         return &self.source_code;
     }
 
@@ -121,7 +124,8 @@ impl SourceFile {
 
 impl fmt::Display for SourceFile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Name: {}\nContent:\n{}", self.source_name.to_path_buf().display(), std::str::from_utf8(&self.source_code).unwrap().green())
+        write!(f, "Name: {}\nContent:\n{}", self.source_name.to_path_buf().display(), self.source_code.green())
+        // write!(f, "Name: {}\nContent:\n{}", self.source_name.to_path_buf().display(), std::str::from_utf8(&self.source_code).unwrap().green())
     }
 }
 

@@ -23,6 +23,7 @@ strum = "0.25.0"
 strum_macros = "0.25"
 clap = { version = "4.4.0", features = ["derive"] }
 colored = "2.1.0"
+substring = "1.4.5"
 
 [workspace.package]
 version = "0.1.0"

@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, path::PathBuf, sync::Arc};
+use std::{ffi::OsStr, fs, path::PathBuf, sync::Arc};
 use colored::*;
 use viper_core::source::{SourceFile, SourceModule};
 
@@ -10,7 +10,7 @@ pub struct BuildSystem {
     path: PathBuf,
 
     /// List of pointers to source code files
-    modules: Vec<Arc<SourceModule>>,
+    modules: Option<Vec<Arc<SourceModule>>>,
 }
 
 /*
@@ -28,21 +28,64 @@ pub struct BuildSystem {
  */
 
 impl BuildSystem {
+    /// Configure the build system from the specified input.
+    /// The input can either be a path to a file or a path 
+    /// to a directory. 
+    /// If a path to a file is specified, we will just compile that file,
+    /// it a path to a directory is specified, we will build the module
+    /// as a whole.
     pub fn new(path: PathBuf) -> BuildSystem {
-        let module = Arc::new(SourceModule::new(&path));
+        match path_is_directory(&path) {
+            true => {
+                println!(
+                    "{}",
+                    format!("Viper found module '{}'", path.as_path().display()).bright_cyan()
+                );
+                let module = Arc::new(SourceModule::new(&path));
+                BuildSystem {
+                    path,
+                    modules: Some(vec![module]),
+                }
+            }
 
-
-        BuildSystem {
-            path,
-            modules: vec![module],
+            false => {
+                println!(
+                    "{}",
+                    format!("Viper found file '{}'", path.as_path().display()).bright_blue()
+                );
+                BuildSystem {
+                    path,
+                    modules: None,
+                }
+            }
         }
+
+
     }
 
     /// TODO: Build system for packages
     pub fn build_project(&self) {
-        for module in &self.modules {
-            println!("{}", format!("Compiling: {module}").bright_cyan());
-            self.build_module(module);
+        match self.modules {
+            Some(ref modules) => {
+                for module in modules {
+                    println!("{}", format!("Compiling: {module}").bright_cyan());
+                    self.build_module(&module);
+                }
+            }
+
+            None => {
+                let file = SourceFile::new(self.path.clone());
+                match file {
+                    Ok(source_file) => {
+                        let file_ptr = Arc::new(source_file);
+                        self.compile_file(&file_ptr);
+                    }
+
+                    Err(err) => {
+                        println!("Error before compiling file: {}", err);
+                    }
+                }
+            }
         }
     }
 
@@ -65,6 +108,21 @@ impl BuildSystem {
 
         let lexer = Lexer::new(file);
         lexer.print_test();
+    }
+}
+
+fn path_is_directory(path: &PathBuf) -> bool {
+    match fs::metadata(path) {
+        Ok(ref md) => {
+            if md.is_dir() {
+                return true;
+            }
+            return false;
+        }
+        Err(_) => {
+            println!("Error finding metadata for path: {}", path.as_path().display());
+            return false;
+        }
     }
 }
 
