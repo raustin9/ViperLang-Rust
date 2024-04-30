@@ -2,7 +2,7 @@
 mod test {
     use std::{str::FromStr, sync::Arc};
 
-    use viper_core::{source::SourceFile, token::{Keyword, KeywordKind, Punctuator, StringLiteral, Token}};
+    use viper_core::{source::SourceFile, token::{Keyword, KeywordKind, Numeric, Punctuator, StringLiteral, Token}};
 
     use crate::lexer::Lexer;
 
@@ -66,6 +66,51 @@ mod test {
             Token::Punctuator(Punctuator::from_str("=").unwrap()),
 
             Token::StringLiteral(StringLiteral::from_str("\"test string literal\"").unwrap()),
+            Token::Punctuator(Punctuator::from_str(";").unwrap()),
+        );
+
+        let mut lexer = Lexer::new(&file_ptr);
+        let mut token = lexer.next_token();
+        let mut i = 0;
+        while token != Token::EOF {
+            println!("Token: {token}");
+            assert_eq!(token, expected[i]);
+            token = lexer.next_token();
+            i += 1;
+        }
+    }
+    
+    #[test]
+    fn lexer_numbers() {
+        let test_file = SourceFile::new_dummy(
+            "let str: String = \"test string literal\";\n
+             let x: i32 = 5 * 2;"
+            , "Test File"
+        );
+        let file_ptr = Arc::from(test_file);
+
+        let expected = vec!(
+
+            Token::Keyword(Keyword { kind: KeywordKind::Let }),
+            Token::Identifier { literal: String::from("str") },
+            Token::Punctuator(Punctuator::from_str(":").unwrap()),
+            Token::Identifier { literal: String::from("String") },
+            
+            Token::Punctuator(Punctuator::from_str("=").unwrap()),
+
+            Token::StringLiteral(StringLiteral::from_str("\"test string literal\"").unwrap()),
+            Token::Punctuator(Punctuator::from_str(";").unwrap()),
+            
+            Token::Keyword(Keyword { kind: KeywordKind::Let }),
+            Token::Identifier { literal: String::from("x") },
+            Token::Punctuator(Punctuator::from_str(":").unwrap()),
+            Token::Keyword(Keyword { kind: KeywordKind::I32 }),
+            
+            Token::Punctuator(Punctuator::from_str("=").unwrap()),
+
+            Token::Numeric(Numeric::Integer { value: 5 }),
+            Token::Punctuator(Punctuator::from_str("*").unwrap()),
+            Token::Numeric(Numeric::Integer { value: 2 }),
             Token::Punctuator(Punctuator::from_str(";").unwrap()),
         );
 
