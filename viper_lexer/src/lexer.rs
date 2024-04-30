@@ -204,7 +204,6 @@ impl<'a> Lexer<'a> {
         match self.current_char {
             '"' => {
                 tok = self.read_string_literal();
-                return tok;
             }
 
             '/' => {

@@ -2,7 +2,7 @@
 mod test {
     use std::{str::FromStr, sync::Arc};
 
-    use viper_core::{source::SourceFile, token::{Keyword, KeywordKind, Numeric, Punctuator, StringLiteral, Token}};
+    use viper_core::{source::SourceFile, token::{Keyword, KeywordKind, Punctuator, StringLiteral, Token}};
 
     use crate::lexer::Lexer;
 
@@ -79,7 +79,6 @@ mod test {
             i += 1;
         }
     }
-    
     #[test]
     fn lexer_numbers() {
         let test_file = SourceFile::new_dummy(
