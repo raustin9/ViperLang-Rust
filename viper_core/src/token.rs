@@ -11,7 +11,7 @@ pub enum Token {
     Numeric(Numeric),
     StringLiteral(StringLiteral),
     Identifier {literal: String},
-    Illegal,
+    Illegal { line: usize, column: usize, content: String },
     EOF,
 }
 
@@ -33,8 +33,8 @@ impl Display for Token {
             Self::Identifier { literal } => {
                 write!(f, "Identifier: '{}'", literal)
             }
-            Self::Illegal => {
-                write!(f, "Illegal")
+            Self::Illegal { line, column, content } => {
+                write!(f, "Illegal token '{content}' at Line {line} Column {column}")
             }
             Self::EOF => {
                 write!(f, "EOF")
@@ -249,6 +249,8 @@ impl PunctuatorKind {
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug)]
 pub struct StringLiteral {
     literal: String,
+    line: usize,
+    column: usize,
 }
 
 /// Display the StringLiteral struct
@@ -263,6 +265,8 @@ impl Display for StringLiteral {
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug)]
 pub struct Keyword {
     pub kind: KeywordKind,
+    pub line: usize,
+    pub column: usize,
 }
 
 impl Display for Keyword {
@@ -277,6 +281,8 @@ pub struct Punctuator {
     pub value: String,
     pub kind: PunctuatorKind,
     pub precedence: Option<OperatorPrecedence>,
+    line: u32,
+    column: u32,
 }
 
 /// Display for operator precedences
@@ -416,7 +422,9 @@ impl FromStr for Punctuator {
         return Ok(Punctuator {
             kind,
             precedence: prec,
-            value: String::from(s)
+            value: String::from(s),
+            line: 0,
+            column: 0,
         });
     }
 }
@@ -428,7 +436,11 @@ impl FromStr for StringLiteral {
     type Err = StringLiteralLexerError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         return Ok(
-            StringLiteral{ literal: String::from(s) }
+            StringLiteral{ 
+                literal: String::from(s), 
+                line: 0, 
+                column: 0 
+            }
         );
     }
 }
