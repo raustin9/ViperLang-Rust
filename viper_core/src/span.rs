@@ -1,12 +1,8 @@
-use core::{fmt, ops::{Add, Sub}};
+use core::ops::{Add, Sub};
 
-#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct CodeSpan {
     pub low: BytePosition,
     pub high: BytePosition,
-}
-
-impl fmt::Display for CodeSpan {
 }
 
 
@@ -77,9 +73,9 @@ macro_rules! impl_position {
 
 
 impl_position! {
-    #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+    #[derive(Clone)]
     pub struct BytePosition(pub u32);
 
-    #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+    #[derive(Clone)]
     pub struct CharacterPosition(pub usize);
 }

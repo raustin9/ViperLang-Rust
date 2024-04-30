@@ -3,23 +3,44 @@ use std::{collections::HashMap, fmt::Display, str::FromStr};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use thiserror::Error;
-use crate::span::CodeSpan;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Token {
-    CommentSingleLine(String),
-    CommentMultiLine(String),
-    StringLiteral(String),
-    Identifier(String),
-    NumericLiteral(),
-
-    Illegal { span: CodeSpan },
+    Keyword(Keyword),
+    Punctuator(Punctuator),
+    Numeric(Numeric),
+    StringLiteral(StringLiteral),
+    Identifier {literal: String},
+    Illegal { line: usize, column: usize, content: String },
     EOF,
 }
 
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "TOKEN")
+        match self {
+            Self::Keyword(keyword) => {
+                write!(f, "{}", keyword)
+            }
+            Self::Punctuator(punctuator) => {
+                write!(f, "{}", punctuator)
+            }
+            Self::Numeric(numeric) => {
+                write!(f, "{}", numeric)
+            }
+            Self::StringLiteral(string_literal) => {
+                write!(f, "{}", string_literal)
+            }
+            Self::Identifier { literal } => {
+                write!(f, "Identifier: '{}'", literal)
+            }
+            Self::Illegal { line, column, content } => {
+                write!(f, "Illegal token '{content}' at Line {line} Column {column}")
+            }
+            Self::EOF => {
+                write!(f, "EOF")
+
+            }
+        }
     }
 }
 
