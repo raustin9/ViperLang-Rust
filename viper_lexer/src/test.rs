@@ -93,7 +93,7 @@ mod test {
                 Some(OperatorPrecedence::Assign),
             ),
 
-            Token::StringLiteral(StringLiteral::from_str("\"test string literal\"").unwrap()),
+            Token::StringLiteral("\"test string literal\"".into()),
             Token::Punctuator(
                 PunctuatorKind::from_str(";").unwrap(), 
                 None
@@ -135,7 +135,7 @@ mod test {
                 Some(OperatorPrecedence::Assign),
             ),
 
-            Token::StringLiteral(StringLiteral::from_str("\"test string literal\"").unwrap()),
+            Token::StringLiteral("\"test string literal\"".into()),
             Token::Punctuator(
                 PunctuatorKind::from_str(";").unwrap(), 
                 None

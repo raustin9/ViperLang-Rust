@@ -1,7 +1,7 @@
 use std::{iter::Peekable, str::{Chars, FromStr}, sync::Arc};
 use substring::Substring;
 
-use viper_core::{source::SourceFile, token::{PunctuatorKind, KeywordKind, Numeric, OperatorPrecedence, Punctuator, StringLiteral, Token}};
+use viper_core::{source::SourceFile, token::{PunctuatorKind, KeywordKind, OperatorPrecedence, Token}};
 
 /// Lexer: This outputs a stream of Tokens from the input source code.
 #[derive(Debug)]
@@ -57,7 +57,7 @@ impl<'a> Lexer<'a> {
 
         let s = self.source_file.code().substring(start_position, self.position);
 
-        return Token::StringLiteral(StringLiteral::from_str(s).unwrap());
+        return Token::StringLiteral(s.into());
     }
 
     /// Read either a token for a specified keyword,

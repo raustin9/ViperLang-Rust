@@ -9,7 +9,7 @@ pub enum Token {
     Keyword(KeywordKind),
     Punctuator(PunctuatorKind, Option<OperatorPrecedence>),
     Numeric{ f: Option<f64>, i: Option<u64> },
-    StringLiteral(StringLiteral),
+    StringLiteral(String),
     Identifier(String),
     Illegal,
     EOF,
