@@ -66,7 +66,6 @@ impl<'a> Lexer<'a> {
     fn read_identifier(&mut self) -> Token {
         // println!("Lexer reading identifier");
         let start_position = self.position.clone();
-        let start_column = self.column;
 
         while char::is_alphanumeric(self.current_char) {
             self.read_char();
@@ -77,9 +76,7 @@ impl<'a> Lexer<'a> {
             Ok(kind) => {
                 // println!("Done.");
                 return Token::Keyword(Keyword {
-                    kind,
-                    line: self.line_number,
-                    column: start_column,
+                    kind
                 });
             }
             Err(ref _err) => {
@@ -109,12 +106,7 @@ impl<'a> Lexer<'a> {
         }
 
         if !is_legal {
-            let s = self.source_file.code().substring(start_position, self.position);
-            return Token::Illegal {
-                line: self.line_number,
-                column: self.column,
-                content: s.into(),
-            };
+            return Token::Illegal;
         } else if floating_point {
             let s = self.source_file.code().substring(start_position, self.position);
             return Token::Numeric(Numeric::FloatingPoint { 
@@ -135,6 +127,11 @@ impl<'a> Lexer<'a> {
         loop {
             match char::is_whitespace(self.current_char) {
                 true => {
+                    if self.current_char == '\n' {
+                        self.line_number += 1;
+                        self.column = 1;
+                    }
+
                     self.read_char();
                 }
 
@@ -164,16 +161,23 @@ impl<'a> Lexer<'a> {
             self.current_char = '\0';
         } else {
             // println!("Read char current: '{}'", self.current_char);
-            if self.current_char == '\n' {
-                self.line_number += 1;
-                self.column = 1;
-            } else {
-                self.column += 1;
-            }
             self.current_char = self.code_iterator.next().unwrap();
-            
+            // println!("Read char eaten: '{}'", self.current_char);
+            // self.current_char = c.clone();
+            self.column += 1;
             self.position += 1;
         }
+//        match self.code_iterator.next() {
+//            Some(c) => {
+//                println!("Lexer reading: '{}'", c.clone());
+//                self.current_char = c.clone();
+//                self.column += 1;
+//                self.position += 1;
+//            }
+//            None => {
+//                self.current_char = '\0';
+//            }
+//        }
     }
 
     /// Peek ahead to the next character without 
@@ -455,11 +459,7 @@ impl<'a> Lexer<'a> {
                     tok = self.read_identifier();
                     return tok;
                 } else {
-                    tok = Token::Illegal {
-                        line: self.line_number,
-                        column: self.column,
-                        content: format!("Illegal character: '{}'", self.current_char).into()
-                    };
+                    tok = Token::Illegal;
                 }
             }
         }
