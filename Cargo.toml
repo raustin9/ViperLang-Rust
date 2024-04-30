@@ -4,7 +4,7 @@ members = [
     "viper_core",
     "viper",
     "viper_lexer",
-    "viper_driver", "viper_parser",
+    "viper_driver", "viper_parser", "viper_ast",
 ]
 
 [workspace.dependencies]
