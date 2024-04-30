@@ -1,7 +1,7 @@
 use std::{iter::Peekable, str::{Chars, FromStr}, sync::Arc};
 use substring::Substring;
 
-use viper_core::{source::SourceFile, token::{Keyword, KeywordKind, Numeric, Punctuator, StringLiteral, Token}};
+use viper_core::{source::SourceFile, token::{PunctuatorKind, KeywordKind, Numeric, OperatorPrecedence, Punctuator, StringLiteral, Token}};
 
 /// Lexer: This outputs a stream of Tokens from the input source code.
 #[derive(Debug)]
@@ -75,9 +75,7 @@ impl<'a> Lexer<'a> {
         match KeywordKind::from_str(s) {
             Ok(kind) => {
                 // println!("Done.");
-                return Token::Keyword(Keyword {
-                    kind
-                });
+                return Token::Keyword(kind);
             }
             Err(ref _err) => {
                 // println!("Done.");
@@ -216,10 +214,16 @@ impl<'a> Lexer<'a> {
                     // TODO: Read comments
                     '=' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("/=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("/=").unwrap(), 
+                            Some(OperatorPrecedence::Assign)
+                        );
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str("/").unwrap())
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("/").unwrap(), 
+                            Some(OperatorPrecedence::MulDivMod)
+                        );
                     }
                 }
             }
@@ -228,10 +232,16 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("+=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("+=").unwrap(), 
+                            Some(OperatorPrecedence::Assign)
+                        );
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str("+").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("+").unwrap(), 
+                            Some(OperatorPrecedence::AddSub)
+                        );
                     }
                 }
             }
@@ -240,10 +250,16 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("-=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("-=").unwrap(), 
+                            Some(OperatorPrecedence::Assign)
+                        );
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str("-").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("-").unwrap(), 
+                            Some(OperatorPrecedence::AddSub)
+                        );
                     }
                 }
             }
@@ -252,10 +268,16 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("*=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("*=").unwrap(), 
+                            Some(OperatorPrecedence::Assign)
+                        );
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str("*").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("*").unwrap(), 
+                            Some(OperatorPrecedence::MulDivMod)
+                        );
                     }
                 }
             }
@@ -264,10 +286,16 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("%=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("%=").unwrap(), 
+                            Some(OperatorPrecedence::Assign)
+                        );
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str("%").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("%").unwrap(), 
+                            Some(OperatorPrecedence::MulDivMod)
+                        );
                     }
                 }
             }
@@ -276,10 +304,16 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("==").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("==").unwrap(), 
+                            Some(OperatorPrecedence::Comparison)
+                        );
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str("=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("=").unwrap(), 
+                            Some(OperatorPrecedence::Assign)
+                        );
                     }
                 }
             }
@@ -288,10 +322,16 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("!=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("!=").unwrap(), 
+                            Some(OperatorPrecedence::Comparison)
+                        );
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str("!").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("!").unwrap(), 
+                            Some(OperatorPrecedence::Prefix)
+                        );
                     }
                 }
             }
@@ -300,14 +340,23 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("&=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("&=").unwrap(), 
+                            Some(OperatorPrecedence::Assign)
+                        );
                     }
                     '&' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("&&").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("&&").unwrap(), 
+                            Some(OperatorPrecedence::Comparison)
+                        );
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str("&").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("&").unwrap(), 
+                            Some(OperatorPrecedence::Bitshift)
+                        );
                     }
                 }
             }
@@ -316,14 +365,23 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("|=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("|=").unwrap(), 
+                            Some(OperatorPrecedence::Assign)
+                        );
                     }
                     '|' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("||").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("||").unwrap(), 
+                            Some(OperatorPrecedence::Comparison)
+                        );
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str("|").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("|").unwrap(), 
+                            Some(OperatorPrecedence::Bitshift)
+                        );
                     }
                 }
             }
@@ -332,11 +390,17 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("^=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("^=").unwrap(), 
+                            Some(OperatorPrecedence::Assign)
+                        );
                     }
                     _ => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("^").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("^").unwrap(), 
+                            Some(OperatorPrecedence::Bitshift)
+                        );
                     }
                 }
             }
@@ -345,10 +409,16 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("~=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("~=").unwrap(), 
+                            Some(OperatorPrecedence::Assign)
+                        );
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str("~").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("~").unwrap(), 
+                            Some(OperatorPrecedence::Bitshift)
+                        );
                     }
                 }
             }
@@ -357,48 +427,81 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     ':' => {
                         self.read_char();
-                        tok = Token::Punctuator(Punctuator::from_str("::").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("::").unwrap(), 
+                            None
+                        );
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str(":").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str(":").unwrap(), 
+                            None
+                        );
                     }
                 }
             }
 
             '(' => {
-                tok = Token::Punctuator(Punctuator::from_str("(").unwrap());
+                tok = Token::Punctuator(
+                    PunctuatorKind::from_str("(").unwrap(), 
+                    None
+                );
             }
 
             ')' => {
-                tok = Token::Punctuator(Punctuator::from_str(")").unwrap());
+                tok = Token::Punctuator(
+                    PunctuatorKind::from_str(")").unwrap(), 
+                    None
+                );
             }
 
             '[' => {
-                tok = Token::Punctuator(Punctuator::from_str("[").unwrap());
+                tok = Token::Punctuator(
+                    PunctuatorKind::from_str("[").unwrap(), 
+                    None
+                );
             }
 
             ']' => {
-                tok = Token::Punctuator(Punctuator::from_str("]").unwrap());
+                tok = Token::Punctuator(
+                    PunctuatorKind::from_str("]").unwrap(), 
+                    None
+                );
             }
 
             '{' => {
-                tok = Token::Punctuator(Punctuator::from_str("{").unwrap());
+                tok = Token::Punctuator(
+                    PunctuatorKind::from_str("{").unwrap(), 
+                    None
+                );
             }
 
             '}' => {
-                tok = Token::Punctuator(Punctuator::from_str("}").unwrap());
+                tok = Token::Punctuator(
+                    PunctuatorKind::from_str("}").unwrap(), 
+                    None
+                );
             }
 
             ',' => {
-                tok = Token::Punctuator(Punctuator::from_str(",").unwrap());
+                tok = Token::Punctuator(
+                    PunctuatorKind::from_str(",").unwrap(), 
+                    None
+                );
             }
 
             '.' => {
-                tok = Token::Punctuator(Punctuator::from_str(".").unwrap());
+                tok = Token::Punctuator(
+                    PunctuatorKind::from_str(".").unwrap(), 
+                    None
+                );
             }
             
             ';' => {
-                tok = Token::Punctuator(Punctuator::from_str(";").unwrap());
+                tok = Token::Punctuator(
+                    PunctuatorKind::from_str(";").unwrap(), 
+                    None
+                );
             }
 
             '\0' => {
@@ -408,22 +511,34 @@ impl<'a> Lexer<'a> {
             '<' => {
                 match self.peek_char() {
                     '=' => {
-                        tok = Token::Punctuator(Punctuator::from_str("<=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("<=").unwrap(), 
+                            Some(OperatorPrecedence::Comparison)
+                        );
                     } 
                     '<' => {
                         self.read_char();
                         match self.peek_char() {
                             '=' => {
                                 self.read_char();
-                                tok = Token::Punctuator(Punctuator::from_str("<<=").unwrap());
+                                tok = Token::Punctuator(
+                                    PunctuatorKind::from_str("<<=").unwrap(), 
+                                    Some(OperatorPrecedence::Assign)
+                                );
                             }
                             _ => {
-                                tok = Token::Punctuator(Punctuator::from_str("<=").unwrap());
+                                tok = Token::Punctuator(
+                                    PunctuatorKind::from_str("<<").unwrap(), 
+                                    Some(OperatorPrecedence::Bitshift)
+                                );
                             }
                         }
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str("<").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("<").unwrap(), 
+                            Some(OperatorPrecedence::Comparison)
+                        );
                     }
                 }
             }
@@ -431,22 +546,34 @@ impl<'a> Lexer<'a> {
             '>' => {
                 match self.peek_char() {
                     '=' => {
-                        tok = Token::Punctuator(Punctuator::from_str(">=").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str(">=").unwrap(), 
+                            Some(OperatorPrecedence::Comparison)
+                        );
                     } 
                     '>' => {
                         self.read_char();
                         match self.peek_char() {
                             '=' => {
                                 self.read_char();
-                                tok = Token::Punctuator(Punctuator::from_str(">>=").unwrap());
+                                tok = Token::Punctuator(
+                                    PunctuatorKind::from_str(">>=").unwrap(), 
+                                    Some(OperatorPrecedence::Assign)
+                                );
                             }
                             _ => {
-                                tok = Token::Punctuator(Punctuator::from_str(">=").unwrap());
+                                tok = Token::Punctuator(
+                                    PunctuatorKind::from_str(">>").unwrap(), 
+                                    Some(OperatorPrecedence::Bitshift)
+                                );
                             }
                         }
                     }
                     _ => {
-                        tok = Token::Punctuator(Punctuator::from_str(">").unwrap());
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str(">").unwrap(), 
+                            Some(OperatorPrecedence::Comparison)
+                        );
                     }
                 }
             }

@@ -2,7 +2,7 @@
 mod test {
     use std::{str::FromStr, sync::Arc};
 
-    use viper_core::{source::SourceFile, token::{Keyword, KeywordKind, Numeric, Punctuator, StringLiteral, Token}};
+    use viper_core::{source::SourceFile, token::{OperatorPrecedence, PunctuatorKind, KeywordKind, Numeric, Punctuator, StringLiteral, Token}};
 
     use crate::lexer::Lexer;
 
@@ -15,26 +15,48 @@ mod test {
         let file_ptr = Arc::from(test_file);
 
         let expected = vec!(
-            Token::Keyword(Keyword {
-                kind: KeywordKind::Define
-            }),
+            Token::Keyword(KeywordKind::Define),
             Token::Identifier { literal: String::from("main") },
-            Token::Punctuator(Punctuator::from_str("(").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str("(").unwrap(), 
+                None
+            ),
 
             Token::Identifier { literal: String::from("argc") },
-            Token::Punctuator(Punctuator::from_str(":").unwrap()),
-            Token::Keyword(Keyword { kind: KeywordKind::I32 }),
-            Token::Punctuator(Punctuator::from_str(",").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str(":").unwrap(), 
+                None
+            ),
+            Token::Keyword(KeywordKind::I32),
+            Token::Punctuator(
+                PunctuatorKind::from_str(",").unwrap(), 
+                None
+            ),
             
             Token::Identifier { literal: String::from("argv") },
-            Token::Punctuator(Punctuator::from_str(":").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str(":").unwrap(), 
+                None
+            ),
             Token::Identifier { literal: String::from("String") },
             
-            Token::Punctuator(Punctuator::from_str(")").unwrap()),
-            Token::Punctuator(Punctuator::from_str(":").unwrap()),
-            Token::Keyword(Keyword { kind: KeywordKind::I32 }),
-            Token::Punctuator(Punctuator::from_str("{").unwrap()),
-            Token::Punctuator(Punctuator::from_str("}").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str(")").unwrap(), 
+                None
+            ),
+            Token::Punctuator(
+                PunctuatorKind::from_str(":").unwrap(), 
+                None
+            ),
+            Token::Keyword(KeywordKind::I32),
+            Token::Punctuator(
+                PunctuatorKind::from_str("{").unwrap(), 
+                None
+            ),
+            Token::Punctuator(
+                PunctuatorKind::from_str("}").unwrap(), 
+                None
+            ),
         );
 
         let mut lexer = Lexer::new(&file_ptr);
@@ -58,15 +80,24 @@ mod test {
 
         let expected = vec!(
 
-            Token::Keyword(Keyword { kind: KeywordKind::Let }),
+            Token::Keyword(KeywordKind::Let),
             Token::Identifier { literal: String::from("str") },
-            Token::Punctuator(Punctuator::from_str(":").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str(":").unwrap(), 
+                None
+            ),
             Token::Identifier { literal: String::from("String") },
             
-            Token::Punctuator(Punctuator::from_str("=").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str("=").unwrap(), 
+                Some(OperatorPrecedence::Assign),
+            ),
 
             Token::StringLiteral(StringLiteral::from_str("\"test string literal\"").unwrap()),
-            Token::Punctuator(Punctuator::from_str(";").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str(";").unwrap(), 
+                None
+            ),
         );
 
         let mut lexer = Lexer::new(&file_ptr);
@@ -91,27 +122,48 @@ mod test {
 
         let expected = vec!(
 
-            Token::Keyword(Keyword { kind: KeywordKind::Let }),
+            Token::Keyword(KeywordKind::Let),
             Token::Identifier { literal: String::from("str") },
-            Token::Punctuator(Punctuator::from_str(":").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str(":").unwrap(), 
+                None
+            ),
             Token::Identifier { literal: String::from("String") },
             
-            Token::Punctuator(Punctuator::from_str("=").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str("=").unwrap(), 
+                Some(OperatorPrecedence::Assign),
+            ),
 
             Token::StringLiteral(StringLiteral::from_str("\"test string literal\"").unwrap()),
-            Token::Punctuator(Punctuator::from_str(";").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str(";").unwrap(), 
+                None
+            ),
             
-            Token::Keyword(Keyword { kind: KeywordKind::Let }),
+            Token::Keyword(KeywordKind::Let),
             Token::Identifier { literal: String::from("x") },
-            Token::Punctuator(Punctuator::from_str(":").unwrap()),
-            Token::Keyword(Keyword { kind: KeywordKind::I32 }),
+            Token::Punctuator(
+                PunctuatorKind::from_str(":").unwrap(), 
+                None
+            ),
+            Token::Keyword(KeywordKind::I32),
             
-            Token::Punctuator(Punctuator::from_str("=").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str("=").unwrap(), 
+                Some(OperatorPrecedence::Assign),
+            ),
 
             Token::Numeric(Numeric::Integer { value: 5 }),
-            Token::Punctuator(Punctuator::from_str("*").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str("*").unwrap(), 
+                Some(OperatorPrecedence::MulDivMod),
+            ),
             Token::Numeric(Numeric::Integer { value: 2 }),
-            Token::Punctuator(Punctuator::from_str(";").unwrap()),
+            Token::Punctuator(
+                PunctuatorKind::from_str(";").unwrap(), 
+                None
+            ),
         );
 
         let mut lexer = Lexer::new(&file_ptr);

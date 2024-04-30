@@ -6,8 +6,8 @@ use thiserror::Error;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Token {
-    Keyword(Keyword),
-    Punctuator(Punctuator),
+    Keyword(KeywordKind),
+    Punctuator(PunctuatorKind, Option<OperatorPrecedence>),
     Numeric(Numeric),
     StringLiteral(StringLiteral),
     Identifier {literal: String},
@@ -19,11 +19,14 @@ impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Keyword(keyword) => {
-                write!(f, "{}", keyword)
+                write!(f, "{}", keyword.as_str())
             }
-            Self::Punctuator(punctuator) => {
-                write!(f, "{}", punctuator)
-            }
+            Self::Punctuator(kind, precedence) => {
+                match precedence {
+                    Some(prec) => write!(f, "{} -> Prec: {}", kind.as_str(), prec.as_str()),
+                    None => write!(f, "{} -> Prec: None", kind.as_str()),
+                }
+                            }
             Self::Numeric(numeric) => {
                 write!(f, "{}", numeric)
             }
@@ -191,6 +194,7 @@ pub enum PunctuatorKind {
    
     /// Typical puncuation
     Comma,
+    Dot,
     Colon,
     DoubleColon,
     SemiColon,
@@ -237,6 +241,7 @@ impl PunctuatorKind {
             Self::LSquirly => return "{",
             Self::RSquirly => return "}",
             Self::Comma => return ",",
+            Self::Dot => return ".",
             Self::Colon => return ":",
             Self::DoubleColon => return "::",
             Self::SemiColon => return ";",
