@@ -107,15 +107,11 @@ impl<'a> Lexer<'a> {
             return Token::Illegal;
         } else if floating_point {
             let s = self.source_file.code().substring(start_position, self.position);
-            return Token::Numeric(Numeric::FloatingPoint { 
-                value: s.parse().unwrap()
-            });
+            return Token::Numeric{ f: Some(s.parse().unwrap()), i: None};
         }
 
         let s = self.source_file.code().substring(start_position, self.position);
-        return Token::Numeric(Numeric::Integer { 
-            value: s.parse().unwrap()
-        });
+        return Token::Numeric{ i: Some(s.parse().unwrap()), f: None};
     }
 
     /// Eat whitespace characters until we get to a non-whitespace 

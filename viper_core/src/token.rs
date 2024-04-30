@@ -8,7 +8,7 @@ use thiserror::Error;
 pub enum Token {
     Keyword(KeywordKind),
     Punctuator(PunctuatorKind, Option<OperatorPrecedence>),
-    Numeric(Numeric),
+    Numeric{ f: Option<f64>, i: Option<u64> },
     StringLiteral(StringLiteral),
     Identifier(String),
     Illegal,
@@ -16,32 +16,37 @@ pub enum Token {
 }
 
 impl Display for Token {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, fout: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Keyword(keyword) => {
-                write!(f, "{}", keyword.as_str())
+                write!(fout, "{}", keyword.as_str())
             }
             Self::Punctuator(kind, precedence) => {
                 match precedence {
-                    Some(prec) => write!(f, "{} -> Prec: {}", kind.as_str(), prec.as_str()),
-                    None => write!(f, "{} -> Prec: None", kind.as_str()),
+                    Some(prec) => write!(fout, "{} -> Prec: {}", kind.as_str(), prec.as_str()),
+                    None => write!(fout, "{} -> Prec: None", kind.as_str()),
                 }
                             }
-            Self::Numeric(numeric) => {
-                write!(f, "{}", numeric)
+            Self::Numeric { f, i } => {
+                match f {
+                    Some(f) => write!(fout, "{}", f),
+                    None => match i {
+                        Some(i) => write!(fout, "{}", i),
+                        None => write!(fout, "Invalid Numeric Token!"),
+                    }
+                }
             }
             Self::StringLiteral(string_literal) => {
-                write!(f, "{}", string_literal)
+                write!(fout, "{}", string_literal)
             }
             Self::Identifier(literal) => {
-                write!(f, "Identifier: '{}'", literal)
+                write!(fout, "Identifier: '{}'", literal)
             }
             Self::Illegal => {
-                write!(f, "Illegal")
+                write!(fout, "Illegal")
             }
             Self::EOF => {
-                write!(f, "EOF")
-
+                write!(fout, "EOF")
             }
         }
     }

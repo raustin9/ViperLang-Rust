@@ -154,12 +154,12 @@ mod test {
                 Some(OperatorPrecedence::Assign),
             ),
 
-            Token::Numeric(Numeric::Integer { value: 5 }),
+            Token::Numeric{ i: Some(5), f: None},
             Token::Punctuator(
                 PunctuatorKind::from_str("*").unwrap(), 
                 Some(OperatorPrecedence::MulDivMod),
             ),
-            Token::Numeric(Numeric::Integer { value: 2 }),
+            Token::Numeric{ i: Some(2), f: None},
             Token::Punctuator(
                 PunctuatorKind::from_str(";").unwrap(), 
                 None
