@@ -4,7 +4,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use thiserror::Error;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Token {
     Keyword(Keyword),
     Punctuator(Punctuator),
@@ -246,7 +246,7 @@ impl PunctuatorKind {
 
 /// Represents a string literal
 /// "string literal"
-#[derive(Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug)]
 pub struct StringLiteral {
     literal: String,
 }
@@ -258,8 +258,9 @@ impl Display for StringLiteral {
     }
 }
 
+
 /// Token type for keywords in Viper
-#[derive(Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug)]
 pub struct Keyword {
     pub kind: KeywordKind,
 }
@@ -271,7 +272,7 @@ impl Display for Keyword {
 }
 
 /// Token type for punctuation in Viper
-#[derive(Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug)]
 pub struct Punctuator {
     pub value: String,
     pub kind: PunctuatorKind,
@@ -306,17 +307,17 @@ impl Display for Punctuator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.precedence {
             Some(ref prec) => {
-                write!(f, "Punctuator: kind - {}. Precedence: {}", self.kind.as_str(), prec)
+                write!(f, "Punctuator: kind: '{}'. Precedence: {}", self.kind.as_str(), prec)
             }
             None => {
-                write!(f, "Punctuator: kind - {}. Precedence: None", self.kind.as_str())
+                write!(f, "Punctuator: kind: '{}'. Precedence: None", self.kind.as_str())
             }
         }
     }
 }
 
 /// Token type for numeric literals
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Numeric {
     Integer{value: u64},
     FloatingPoint{value: f64},
@@ -417,5 +418,17 @@ impl FromStr for Punctuator {
             precedence: prec,
             value: String::from(s)
         });
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Error)]
+#[error("invalid string representation of keyword.")]
+pub struct StringLiteralLexerError;
+impl FromStr for StringLiteral {
+    type Err = StringLiteralLexerError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        return Ok(
+            StringLiteral{ literal: String::from(s) }
+        );
     }
 }

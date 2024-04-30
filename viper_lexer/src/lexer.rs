@@ -1,7 +1,7 @@
 use std::{iter::Peekable, str::{Chars, FromStr}, sync::Arc};
 use substring::Substring;
 
-use viper_core::{source::SourceFile, token::{Keyword, KeywordKind, Numeric, Punctuator, Token}};
+use viper_core::{source::SourceFile, token::{Keyword, KeywordKind, Numeric, Punctuator, StringLiteral, Token}};
 
 pub struct Lexer<'a> {
     source_file: &'a Arc<SourceFile>,
@@ -29,6 +29,22 @@ impl<'a> Lexer<'a> {
         return l;
     }
 
+    /// Read a string literal token from the source code input
+    /// ex: "test string content"
+    fn read_string_literal(&mut self) -> Token {
+        let start_position = self.position.clone();
+        self.read_char(); // eat the first "
+        while self.current_char != '\"' {
+            self.read_char();
+        }
+
+        self.read_char(); // eat the last "
+
+        let s = self.source_file.code().substring(start_position, self.position);
+
+        return Token::StringLiteral(StringLiteral::from_str(s).unwrap());
+    }
+
     /// Read either a token for a specified keyword,
     /// and if it is not a valid keyword then it 
     /// is an identifier
@@ -36,7 +52,7 @@ impl<'a> Lexer<'a> {
         // println!("Lexer reading identifier");
         let start_position = self.position.clone();
 
-        while char::is_alphabetic(self.current_char) {
+        while char::is_alphanumeric(self.current_char) {
             self.read_char();
         }
 
@@ -171,6 +187,10 @@ impl<'a> Lexer<'a> {
         self.skip_whitespace();
 
         match self.current_char {
+            '"' => {
+                tok = self.read_string_literal();
+            }
+
             '/' => {
                 match self.peek_char() {
                     // TODO: Read comments

@@ -110,6 +110,13 @@ impl SourceFile {
         };
     }
 
+    pub fn new_dummy(content: &'static str, name: &'static str) -> SourceFile {
+        return SourceFile {
+            source_code: Arc::from(content),
+            source_name: PathBuf::from(name),
+        };
+    }
+
     /// Get a reference to the source code of the file
     pub fn code(&self) -> &Arc<str> {
     // pub fn code(&self) -> &Arc<[u8]> {
