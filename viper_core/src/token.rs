@@ -10,7 +10,7 @@ pub enum Token {
     Punctuator(PunctuatorKind, Option<OperatorPrecedence>),
     Numeric(Numeric),
     StringLiteral(StringLiteral),
-    Identifier {literal: String},
+    Identifier(String),
     Illegal,
     EOF,
 }
@@ -33,7 +33,7 @@ impl Display for Token {
             Self::StringLiteral(string_literal) => {
                 write!(f, "{}", string_literal)
             }
-            Self::Identifier { literal } => {
+            Self::Identifier(literal) => {
                 write!(f, "Identifier: '{}'", literal)
             }
             Self::Illegal => {

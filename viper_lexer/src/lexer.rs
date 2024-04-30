@@ -79,7 +79,7 @@ impl<'a> Lexer<'a> {
             }
             Err(ref _err) => {
                 // println!("Done.");
-                return Token::Identifier { literal: String::from(s) };
+                return Token::Identifier(String::from(s));
             }
         }
     }

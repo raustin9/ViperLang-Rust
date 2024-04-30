@@ -16,13 +16,13 @@ mod test {
 
         let expected = vec!(
             Token::Keyword(KeywordKind::Define),
-            Token::Identifier { literal: String::from("main") },
+            Token::Identifier(String::from("main")),
             Token::Punctuator(
                 PunctuatorKind::from_str("(").unwrap(), 
                 None
             ),
 
-            Token::Identifier { literal: String::from("argc") },
+            Token::Identifier(String::from("argc")),
             Token::Punctuator(
                 PunctuatorKind::from_str(":").unwrap(), 
                 None
@@ -33,12 +33,12 @@ mod test {
                 None
             ),
             
-            Token::Identifier { literal: String::from("argv") },
+            Token::Identifier(String::from("argv")),
             Token::Punctuator(
                 PunctuatorKind::from_str(":").unwrap(), 
                 None
             ),
-            Token::Identifier { literal: String::from("String") },
+            Token::Identifier(String::from("String")),
             
             Token::Punctuator(
                 PunctuatorKind::from_str(")").unwrap(), 
@@ -81,12 +81,12 @@ mod test {
         let expected = vec!(
 
             Token::Keyword(KeywordKind::Let),
-            Token::Identifier { literal: String::from("str") },
+            Token::Identifier(String::from("str")),
             Token::Punctuator(
                 PunctuatorKind::from_str(":").unwrap(), 
                 None
             ),
-            Token::Identifier { literal: String::from("String") },
+            Token::Identifier(String::from("String")),
             
             Token::Punctuator(
                 PunctuatorKind::from_str("=").unwrap(), 
@@ -123,12 +123,12 @@ mod test {
         let expected = vec!(
 
             Token::Keyword(KeywordKind::Let),
-            Token::Identifier { literal: String::from("str") },
+            Token::Identifier(String::from("str")),
             Token::Punctuator(
                 PunctuatorKind::from_str(":").unwrap(), 
                 None
             ),
-            Token::Identifier { literal: String::from("String") },
+            Token::Identifier(String::from("String")),
             
             Token::Punctuator(
                 PunctuatorKind::from_str("=").unwrap(), 
@@ -142,7 +142,7 @@ mod test {
             ),
             
             Token::Keyword(KeywordKind::Let),
-            Token::Identifier { literal: String::from("x") },
+            Token::Identifier(String::from("x")),
             Token::Punctuator(
                 PunctuatorKind::from_str(":").unwrap(), 
                 None
