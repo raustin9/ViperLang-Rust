@@ -239,16 +239,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "viper_ast"
-version = "0.1.0"
-dependencies = [
- "clap",
- "lazy_static",
- "substring",
- "viper_core",
-]
-
-[[package]]
 name = "viper_core"
 version = "0.1.0"
 dependencies = [
