@@ -3,17 +3,32 @@ use substring::Substring;
 
 use viper_core::{source::SourceFile, token::{Keyword, KeywordKind, Numeric, Punctuator, StringLiteral, Token}};
 
+/// Lexer: This outputs a stream of Tokens from the input source code.
+#[derive(Debug)]
 pub struct Lexer<'a> {
+    /// Pointer to the source code file
     source_file: &'a Arc<SourceFile>,
+
+    /// Iterator that points to a location along the input source code
     code_iterator: Peekable<Chars<'a>>,
-    // code_iterator: std::str::PeekableChars<'a>,
+    
+    /// The current line number that we are on in the file
     line_number: usize,
+
+    /// The current column position within the line we are tokenizing
     column: usize,
+
+    /// The current character that we are looking at when tokenizing
     current_char: char,
+
+    /// The current number of characters that we have passed when tokenizing.
+    /// This is used for creating substrings of parts of the source code
     position: usize,
 }
 
+/// Implementation of the Lexer for the 'a lifetime
 impl<'a> Lexer<'a> {
+    /// Create a new lexer from a pointer to the source code file
     pub fn new(source: &'a Arc<SourceFile>) -> Lexer {
         let mut it = source.code().chars().peekable();
         let c = it.next().unwrap();
@@ -48,7 +63,7 @@ impl<'a> Lexer<'a> {
     /// Read either a token for a specified keyword,
     /// and if it is not a valid keyword then it 
     /// is an identifier
-    pub fn read_identifier(&mut self) -> Token {
+    fn read_identifier(&mut self) -> Token {
         // println!("Lexer reading identifier");
         let start_position = self.position.clone();
 
@@ -86,6 +101,8 @@ impl<'a> Lexer<'a> {
             if self.current_char == '.' {
                 floating_point = true;
             }
+            
+            self.read_char();
         }
 
         if !is_legal {
@@ -106,6 +123,22 @@ impl<'a> Lexer<'a> {
     /// Eat whitespace characters until we get to a non-whitespace 
     /// one in the source code input
     pub fn skip_whitespace(&mut self) {
+        // println!("Done.");
+        loop {
+            match char::is_whitespace(self.current_char) {
+                true => {
+                    if self.current_char == '\n' {
+                        self.line_number += 1;
+                        self.column = 1;
+                    }
+
+                    self.read_char();
+                }
+
+                false => return,
+            }
+        }
+        /* Old implementation of this
         // println!("skipping whitespace");
         while  self.current_char == '\n'
                 || self.current_char == '\r'
@@ -118,22 +151,8 @@ impl<'a> Lexer<'a> {
             // println!("skipping '{}'", self.current_char);
             self.read_char();
         }
-        // println!("Done.");
+        */
     }
-    //            loop {
-    //            match char::is_whitespace(self.current_char) {
-    //                true => {
-    //                    if self.current_char == '\n' {
-    //                        self.line_number += 1;
-    //                        self.column = 1;
-    //                    }
-    //
-    //                    self.read_char();
-    //                }
-    //
-    //                false => return,
-    //            }
-    //        }
 
 
     /// Eat a character and incriment proper values
@@ -175,7 +194,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Eat a single line comment
-    pub fn read_single_line_comment(&mut self) {
+    fn _read_single_line_comment(&mut self) {
         while self.current_char != '\n' {
             self.read_char();
         }
@@ -434,6 +453,7 @@ impl<'a> Lexer<'a> {
             _ => {
                 if char::is_digit(self.current_char, 10) {
                     tok = self.read_number();
+                    return tok;
                 } else if char::is_alphabetic(self.current_char) {
                     tok = self.read_identifier();
                     return tok;

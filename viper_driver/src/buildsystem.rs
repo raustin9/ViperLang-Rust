@@ -107,6 +107,7 @@ impl BuildSystem {
         );
 
         let mut lexer = Lexer::new(file);
+        lexer.print_test();
         let mut tok = lexer.next_token();
         while tok != Token::EOF {
             println!(

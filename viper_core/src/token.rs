@@ -193,7 +193,7 @@ pub enum PunctuatorKind {
     Comma,
     Colon,
     DoubleColon,
-    Semicolon,
+    SemiColon,
 }
 
 impl PunctuatorKind {
@@ -239,7 +239,7 @@ impl PunctuatorKind {
             Self::Comma => return ",",
             Self::Colon => return ":",
             Self::DoubleColon => return "::",
-            Self::Semicolon => return ";",
+            Self::SemiColon => return ";",
         }
     }
 }
