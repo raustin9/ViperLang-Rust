@@ -3,47 +3,92 @@ use std::{collections::HashMap, fmt::Display, str::FromStr};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use thiserror::Error;
+use crate::span::Span;
 
-#[derive(Clone, PartialEq, Debug)]
+/// The types of tokens that are valid input in the Viper programming language
+#[derive(Clone, Debug)]
 pub enum Token {
-    Keyword(KeywordKind),
-    Punctuator(PunctuatorKind, Option<OperatorPrecedence>),
-    Numeric{ f: Option<f64>, i: Option<u64> },
-    StringLiteral(String),
-    Identifier(String),
-    Illegal,
+    Keyword(KeywordKind, Span),
+    Punctuator(PunctuatorKind, Option<OperatorPrecedence>, Span),
+    NumericLiteral(NumericValue, Span),
+    StringLiteral(String, Span),
+    Identifier(String, Span),
+    Illegal(String, Span),
     EOF,
+}
+
+impl PartialEq for Token {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            Self::Keyword(_, _) => {
+                match other {
+                    Self::Keyword(_, _) => true,
+                    _ => false,
+                }
+            }
+            Self::NumericLiteral(_, _) => {
+                match other {
+                    Self::NumericLiteral(_, _) => true,
+                    _ => false,
+                }
+            }
+            Self::StringLiteral(_, _) => {
+                match other {
+                    Self::StringLiteral(_, _) => true,
+                    _ => false,
+                }
+            }
+            Self::Illegal(_, _) => {
+                match other {
+                    Self::Illegal(_, _) => true,
+                    _ => false,
+                }
+            }
+            Self::Identifier(_, _) => {
+                match other {
+                    Self::Identifier(_, _) => true,
+                    _ => false,
+                }
+            }
+            Self::Punctuator(_, _, _) => {
+                match other {
+                    Self::Punctuator(_, _, _) => true,
+                    _ => false,
+                }
+            }
+            Self::EOF => {
+                match other {
+                    Self::EOF => true,
+                    _ => false,
+                }
+            }
+        }
+    }
 }
 
 impl Display for Token {
     fn fmt(&self, fout: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Keyword(keyword) => {
+            Self::Keyword(keyword, _span) => {
                 write!(fout, "{}", keyword.as_str())
             }
-            Self::Punctuator(kind, precedence) => {
+            Self::Punctuator(kind, precedence, _span) => {
                 match precedence {
                     Some(prec) => write!(fout, "{} -> Prec: {}", kind.as_str(), prec.as_str()),
                     None => write!(fout, "{} -> Prec: None", kind.as_str()),
                 }
                             }
-            Self::Numeric { f, i } => {
-                match f {
-                    Some(f) => write!(fout, "{}", f),
-                    None => match i {
-                        Some(i) => write!(fout, "{}", i),
-                        None => write!(fout, "Invalid Numeric Token!"),
-                    }
-                }
+            Self::NumericLiteral(value, _span) => {
+                write!(fout, "{}", value)                    
             }
-            Self::StringLiteral(string_literal) => {
+            Self::StringLiteral(string_literal, _span) => {
                 write!(fout, "{}", string_literal)
             }
-            Self::Identifier(literal) => {
+            Self::Identifier(literal, _span) => {
                 write!(fout, "Identifier: '{}'", literal)
             }
-            Self::Illegal => {
-                write!(fout, "Illegal")
+            Self::Illegal(msg, _span) => {
+                write!(fout, "Illegal token '{msg}'")
             }
             Self::EOF => {
                 write!(fout, "EOF")
@@ -52,6 +97,7 @@ impl Display for Token {
     }
 }
 
+/// Enumeration of the types of keywords that are available in the Viper programming language
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter)]
 pub enum KeywordKind {
     /// Declarator keywords
@@ -135,6 +181,7 @@ impl KeywordKind {
     }
 }
 
+
 /// Operator precedences for binding expressions
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter, Default)]
 pub enum OperatorPrecedence {
@@ -150,9 +197,10 @@ pub enum OperatorPrecedence {
 }
 
 
+/// Enumeration of the types of punctuators that are available in the Viper programming language
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter)]
 pub enum PunctuatorKind {
-    /// Operators
+    // Operators
     Plus,
     Minus,
     Star,
@@ -197,7 +245,7 @@ pub enum PunctuatorKind {
     LSquirly,
     RSquirly,
    
-    /// Typical puncuation
+    // Typical puncuation
     Comma,
     Dot,
     Colon,
@@ -254,47 +302,6 @@ impl PunctuatorKind {
     }
 }
 
-/// Represents a string literal
-/// "string literal"
-#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug)]
-pub struct StringLiteral {
-    literal: String,
-}
-
-/// Display the StringLiteral struct
-impl Display for StringLiteral {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "String Literal: '{}'", self.literal)
-    }
-}
-
-
-/// Token type for keywords in Viper
-#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug)]
-pub struct Keyword {
-    pub kind: KeywordKind,
-}
-
-impl Display for Keyword {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Keyword: '{}'", self.kind.as_str())
-    }
-}
-
-/// Token type for punctuation in Viper
-#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug)]
-pub struct Punctuator {
-    pub value: String,
-    pub kind: PunctuatorKind,
-    pub precedence: Option<OperatorPrecedence>,
-}
-
-/// Display for operator precedences
-impl Display for OperatorPrecedence {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
 
 /// Implementation for operator precedences
 impl OperatorPrecedence {
@@ -312,32 +319,27 @@ impl OperatorPrecedence {
     }
 }
 
-/// Display the Punctuator token
-impl Display for Punctuator {
+
+/// Display for operator precedences
+impl Display for OperatorPrecedence {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.precedence {
-            Some(ref prec) => {
-                write!(f, "Punctuator: kind: '{}'. Precedence: {}", self.kind.as_str(), prec)
-            }
-            None => {
-                write!(f, "Punctuator: kind: '{}'. Precedence: None", self.kind.as_str())
-            }
-        }
+        write!(f, "{}", self.as_str())
     }
 }
 
+
 /// Token type for numeric literals
 #[derive(Clone, PartialEq, Debug)]
-pub enum Numeric {
-    Integer{value: u64},
-    FloatingPoint{value: f64},
+pub enum NumericValue {
+    Integer(u64),
+    FloatingPoint(f64),
 }
 
-impl Display for Numeric {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for NumericValue {
+    fn fmt(&self, fout: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Integer { value } => write!(f, "Integer: '{}'", value),
-            Self::FloatingPoint { value } => write!(f, "Integer: '{}'", value),
+            Self::Integer(i) => write!(fout, "Integer: '{}'", i),
+            Self::FloatingPoint(f) => write!(fout, "Floating Point: '{}'", f),
         }
     }
 }
@@ -391,54 +393,5 @@ impl FromStr for PunctuatorKind {
         };
 
         return OPERATOR_STRING_MAP.get(s).copied().ok_or(PunctuatorLexerError);
-    }
-}
-
-impl FromStr for Punctuator {
-    type Err = PunctuatorLexerError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let kind = PunctuatorKind::from_str(s).unwrap();
-        let prec = match kind {
-            PunctuatorKind::Plus | PunctuatorKind::Minus => {
-                Some(OperatorPrecedence::AddSub)
-            }
-            PunctuatorKind::Mod | PunctuatorKind::Star | PunctuatorKind::Slash => {
-                Some(OperatorPrecedence::MulDivMod)
-            }
-            PunctuatorKind::RShift | PunctuatorKind::LShift  | 
-            PunctuatorKind::Caret | PunctuatorKind::Ampersand | 
-            PunctuatorKind::Pipe => {
-                Some(OperatorPrecedence::Bitshift)
-            }
-            PunctuatorKind::Bang | PunctuatorKind::Tilde => {
-                Some(OperatorPrecedence::Prefix)
-            }
-            PunctuatorKind::LessThan | PunctuatorKind::GreaterThan |
-            PunctuatorKind::LessThanEQ | PunctuatorKind::GreaterThanEQ |
-            PunctuatorKind::EqualTo | PunctuatorKind::NotEqualTo => {
-                Some(OperatorPrecedence::Comparison)
-            }
-            _ => {
-                None
-            }
-        };
-
-        return Ok(Punctuator {
-            kind,
-            precedence: prec,
-            value: String::from(s)
-        });
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Error)]
-#[error("invalid string representation of keyword.")]
-pub struct StringLiteralLexerError;
-impl FromStr for StringLiteral {
-    type Err = StringLiteralLexerError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        return Ok(
-            StringLiteral{ literal: String::from(s) }
-        );
     }
 }

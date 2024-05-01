@@ -1,9 +1,8 @@
 use core::fmt;
 use std::{fs, ops::Range, path::PathBuf, sync::Arc};
-use crate::error::{ 
-    IoError, VError
-};
 use colored::*;
+
+use crate::error::ViperError;
 
 /// Represents the location of a lexeme within a source code file
 #[derive(Clone, Debug, Copy, Default, PartialEq, Eq)]
@@ -93,7 +92,7 @@ impl fmt::Display for SourceModule {
 
 impl SourceFile {
     /// Create a new source code file from the specified path
-    pub fn new(path: PathBuf) -> Result<SourceFile, VError> {
+    pub fn new(path: PathBuf) -> Result<SourceFile, ViperError> {
         let contents = fs::read_to_string(path.clone());
 
         match contents {
@@ -105,7 +104,8 @@ impl SourceFile {
                 });
             },
             Err(_) => {
-                return Err(IoError::new("Unable to read from file!"));
+                return Err(ViperError::IoError);
+                // return Err(IoError::new("Unable to read from file!"));
             }
         };
     }

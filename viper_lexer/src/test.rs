@@ -2,7 +2,7 @@
 mod test {
     use std::{str::FromStr, sync::Arc};
 
-    use viper_core::{source::SourceFile, token::{OperatorPrecedence, PunctuatorKind, KeywordKind, Numeric, Punctuator, StringLiteral, Token}};
+    use viper_core::{span::Span, source::SourceFile, token::{NumericValue, OperatorPrecedence, PunctuatorKind, KeywordKind, Token}};
 
     use crate::lexer::Lexer;
 
@@ -15,47 +15,55 @@ mod test {
         let file_ptr = Arc::from(test_file);
 
         let expected = vec!(
-            Token::Keyword(KeywordKind::Define),
-            Token::Identifier(String::from("main")),
+            Token::Keyword(KeywordKind::Define,Span::dummy()),
+            Token::Identifier(String::from("main"),Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str("(").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
 
-            Token::Identifier(String::from("argc")),
+            Token::Identifier(String::from("argc"),Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str(":").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
-            Token::Keyword(KeywordKind::I32),
+            Token::Keyword(KeywordKind::I32,Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str(",").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
             
-            Token::Identifier(String::from("argv")),
+            Token::Identifier(String::from("argv"),Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str(":").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
-            Token::Identifier(String::from("String")),
+            Token::Identifier(String::from("String"),Span::dummy()),
             
             Token::Punctuator(
                 PunctuatorKind::from_str(")").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
             Token::Punctuator(
                 PunctuatorKind::from_str(":").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
-            Token::Keyword(KeywordKind::I32),
+            Token::Keyword(KeywordKind::I32,Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str("{").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
             Token::Punctuator(
                 PunctuatorKind::from_str("}").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
         );
 
@@ -80,23 +88,26 @@ mod test {
 
         let expected = vec!(
 
-            Token::Keyword(KeywordKind::Let),
-            Token::Identifier(String::from("str")),
+            Token::Keyword(KeywordKind::Let,Span::dummy()),
+            Token::Identifier(String::from("str"),Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str(":").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
-            Token::Identifier(String::from("String")),
+            Token::Identifier(String::from("String"),Span::dummy()),
             
             Token::Punctuator(
                 PunctuatorKind::from_str("=").unwrap(), 
                 Some(OperatorPrecedence::Assign),
+                Span::dummy()
             ),
 
-            Token::StringLiteral("\"test string literal\"".into()),
+            Token::StringLiteral("\"test string literal\"".into(),Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str(";").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
         );
 
@@ -122,47 +133,54 @@ mod test {
 
         let expected = vec!(
 
-            Token::Keyword(KeywordKind::Let),
-            Token::Identifier(String::from("str")),
+            Token::Keyword(KeywordKind::Let,Span::dummy()),
+            Token::Identifier(String::from("str"),Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str(":").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
-            Token::Identifier(String::from("String")),
+            Token::Identifier(String::from("String"),Span::dummy()),
             
             Token::Punctuator(
                 PunctuatorKind::from_str("=").unwrap(), 
                 Some(OperatorPrecedence::Assign),
+                Span::dummy()
             ),
 
-            Token::StringLiteral("\"test string literal\"".into()),
+            Token::StringLiteral("\"test string literal\"".into(),Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str(";").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
             
-            Token::Keyword(KeywordKind::Let),
-            Token::Identifier(String::from("x")),
+            Token::Keyword(KeywordKind::Let,Span::dummy()),
+            Token::Identifier(String::from("x"),Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str(":").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
-            Token::Keyword(KeywordKind::I32),
+            Token::Keyword(KeywordKind::I32,Span::dummy()),
             
             Token::Punctuator(
                 PunctuatorKind::from_str("=").unwrap(), 
                 Some(OperatorPrecedence::Assign),
+                Span::dummy()
             ),
 
-            Token::Numeric{ i: Some(5), f: None},
+            Token::NumericLiteral(NumericValue::Integer(5),Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str("*").unwrap(), 
                 Some(OperatorPrecedence::MulDivMod),
+                Span::dummy()
             ),
-            Token::Numeric{ i: Some(2), f: None},
+            Token::NumericLiteral(NumericValue::Integer(2),Span::dummy()),
             Token::Punctuator(
                 PunctuatorKind::from_str(";").unwrap(), 
-                None
+                None,
+                Span::dummy()
             ),
         );
 

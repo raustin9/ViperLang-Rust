@@ -1,7 +1,7 @@
 use std::{iter::Peekable, str::{Chars, FromStr}, sync::Arc};
 use substring::Substring;
 
-use viper_core::{source::SourceFile, token::{PunctuatorKind, KeywordKind, OperatorPrecedence, Token}};
+use viper_core::{source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 
 /// Lexer: This outputs a stream of Tokens from the input source code.
 #[derive(Debug)]
@@ -48,6 +48,8 @@ impl<'a> Lexer<'a> {
     /// ex: "test string content"
     fn read_string_literal(&mut self) -> Token {
         let start_position = self.position.clone();
+        let start_line = self.line_number.clone();
+        let start_col = self.column.clone();
         self.read_char(); // eat the first "
         while self.current_char != '\"' {
             self.read_char();
@@ -56,8 +58,14 @@ impl<'a> Lexer<'a> {
         self.read_char(); // eat the last "
 
         let s = self.source_file.code().substring(start_position, self.position);
-
-        return Token::StringLiteral(s.into());
+        return Token::StringLiteral(
+            s.into(),
+            Span::new(
+                start_line, 
+                self.line_number.clone(), 
+                start_col, self.column.clone()
+            )
+        );
     }
 
     /// Read either a token for a specified keyword,
@@ -66,6 +74,8 @@ impl<'a> Lexer<'a> {
     fn read_identifier(&mut self) -> Token {
         // println!("Lexer reading identifier");
         let start_position = self.position.clone();
+        let start_line = self.line_number.clone();
+        let start_col = self.column.clone();
 
         while char::is_alphanumeric(self.current_char) {
             self.read_char();
@@ -75,11 +85,25 @@ impl<'a> Lexer<'a> {
         match KeywordKind::from_str(s) {
             Ok(kind) => {
                 // println!("Done.");
-                return Token::Keyword(kind);
+                return Token::Keyword(
+                    kind,
+                    Span::new(
+                        start_line, 
+                        self.line_number.clone(), 
+                        start_col, self.column.clone()
+                    )
+                );
             }
             Err(ref _err) => {
                 // println!("Done.");
-                return Token::Identifier(String::from(s));
+                return Token::Identifier(
+                    String::from(s),
+                    Span::new(
+                        start_line, 
+                        self.line_number.clone(), 
+                        start_col, self.column.clone()
+                    )
+                );
             }
         }
     }
@@ -90,6 +114,8 @@ impl<'a> Lexer<'a> {
         let mut floating_point = false;
         let mut is_legal = true;
         let start_position = self.position.clone();
+        let start_line = self.line_number.clone();
+        let start_col = self.column.clone();
 
         while char::is_digit(self.current_char, 10) {
             if self.current_char == '.' && floating_point == true {
@@ -104,14 +130,36 @@ impl<'a> Lexer<'a> {
         }
 
         if !is_legal {
-            return Token::Illegal;
+            let s = self.source_file.code().substring(start_position, self.position);
+            return Token::Illegal(
+                s.into(),
+                Span::new(
+                    start_line, 
+                    self.line_number.clone(), 
+                    start_col, self.column.clone()
+                )
+            );
         } else if floating_point {
             let s = self.source_file.code().substring(start_position, self.position);
-            return Token::Numeric{ f: Some(s.parse().unwrap()), i: None};
+            return Token::NumericLiteral(
+                NumericValue::FloatingPoint(s.parse().unwrap()),
+                Span::new(
+                    start_line, 
+                    self.line_number.clone(), 
+                    start_col, self.column.clone()
+                )
+            );
         }
 
         let s = self.source_file.code().substring(start_position, self.position);
-        return Token::Numeric{ i: Some(s.parse().unwrap()), f: None};
+        return Token::NumericLiteral(
+            NumericValue::Integer(s.parse().unwrap()),
+            Span::new(
+                start_line, 
+                self.line_number.clone(), 
+                start_col, self.column.clone()
+            )
+        );
     }
 
     /// Eat whitespace characters until we get to a non-whitespace 
@@ -210,15 +258,21 @@ impl<'a> Lexer<'a> {
                     // TODO: Read comments
                     '=' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("/=").unwrap(), 
-                            Some(OperatorPrecedence::Assign)
+                            Some(OperatorPrecedence::Assign),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("/").unwrap(), 
-                            Some(OperatorPrecedence::MulDivMod)
+                            Some(OperatorPrecedence::MulDivMod),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -228,15 +282,21 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("+=").unwrap(), 
-                            Some(OperatorPrecedence::Assign)
+                            Some(OperatorPrecedence::Assign),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("+").unwrap(), 
-                            Some(OperatorPrecedence::AddSub)
+                            Some(OperatorPrecedence::AddSub),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -246,15 +306,21 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("-=").unwrap(), 
-                            Some(OperatorPrecedence::Assign)
+                            Some(OperatorPrecedence::Assign),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("-").unwrap(), 
-                            Some(OperatorPrecedence::AddSub)
+                            Some(OperatorPrecedence::AddSub),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -264,15 +330,21 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("*=").unwrap(), 
-                            Some(OperatorPrecedence::Assign)
+                            Some(OperatorPrecedence::Assign),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("*").unwrap(), 
-                            Some(OperatorPrecedence::MulDivMod)
+                            Some(OperatorPrecedence::MulDivMod),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -282,15 +354,21 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("%=").unwrap(), 
-                            Some(OperatorPrecedence::Assign)
+                            Some(OperatorPrecedence::Assign),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("%").unwrap(), 
-                            Some(OperatorPrecedence::MulDivMod)
+                            Some(OperatorPrecedence::MulDivMod),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -300,15 +378,21 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("==").unwrap(), 
-                            Some(OperatorPrecedence::Comparison)
+                            Some(OperatorPrecedence::Comparison),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("=").unwrap(), 
-                            Some(OperatorPrecedence::Assign)
+                            Some(OperatorPrecedence::Assign),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -318,15 +402,21 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("!=").unwrap(), 
-                            Some(OperatorPrecedence::Comparison)
+                            Some(OperatorPrecedence::Comparison),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("!").unwrap(), 
-                            Some(OperatorPrecedence::Prefix)
+                            Some(OperatorPrecedence::Prefix),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -336,22 +426,31 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("&=").unwrap(), 
-                            Some(OperatorPrecedence::Assign)
+                            Some(OperatorPrecedence::Assign),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     '&' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("&&").unwrap(), 
-                            Some(OperatorPrecedence::Comparison)
+                            Some(OperatorPrecedence::Comparison),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("&").unwrap(), 
-                            Some(OperatorPrecedence::Bitshift)
+                            Some(OperatorPrecedence::Bitshift),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -361,22 +460,31 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("|=").unwrap(), 
-                            Some(OperatorPrecedence::Assign)
+                            Some(OperatorPrecedence::Assign),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     '|' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("||").unwrap(), 
-                            Some(OperatorPrecedence::Comparison)
+                            Some(OperatorPrecedence::Comparison),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("|").unwrap(), 
-                            Some(OperatorPrecedence::Bitshift)
+                            Some(OperatorPrecedence::Bitshift),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -386,16 +494,22 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("^=").unwrap(), 
-                            Some(OperatorPrecedence::Assign)
+                            Some(OperatorPrecedence::Assign),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("^").unwrap(), 
-                            Some(OperatorPrecedence::Bitshift)
+                            Some(OperatorPrecedence::Bitshift),,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -405,15 +519,21 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     '=' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("~=").unwrap(), 
-                            Some(OperatorPrecedence::Assign)
+                            Some(OperatorPrecedence::Assign),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("~").unwrap(), 
-                            Some(OperatorPrecedence::Bitshift)
+                            Some(OperatorPrecedence::Bitshift),,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -423,80 +543,113 @@ impl<'a> Lexer<'a> {
                 match self.peek_char() {
                     ':' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("::").unwrap(), 
-                            None
+                            None,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str(":").unwrap(), 
-                            None
+                            None,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
             }
 
             '(' => {
+                let start_line = self.line_number.clone();
+                let start_col = self.column.clone();
                 tok = Token::Punctuator(
                     PunctuatorKind::from_str("(").unwrap(), 
-                    None
+                    None,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                 );
             }
 
             ')' => {
+                let start_line = self.line_number.clone();
+                let start_col = self.column.clone();
                 tok = Token::Punctuator(
                     PunctuatorKind::from_str(")").unwrap(), 
-                    None
+                    None,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                 );
             }
 
             '[' => {
+                let start_line = self.line_number.clone();
+                let start_col = self.column.clone();
                 tok = Token::Punctuator(
                     PunctuatorKind::from_str("[").unwrap(), 
-                    None
+                    None,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                 );
             }
 
             ']' => {
+                let start_line = self.line_number.clone();
+                let start_col = self.column.clone();
                 tok = Token::Punctuator(
                     PunctuatorKind::from_str("]").unwrap(), 
-                    None
+                    None,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                 );
             }
 
             '{' => {
+                let start_line = self.line_number.clone();
+                let start_col = self.column.clone();
                 tok = Token::Punctuator(
                     PunctuatorKind::from_str("{").unwrap(), 
-                    None
+                    None,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                 );
             }
 
             '}' => {
+                let start_line = self.line_number.clone();
+                let start_col = self.column.clone();
                 tok = Token::Punctuator(
                     PunctuatorKind::from_str("}").unwrap(), 
-                    None
+                    None,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                 );
             }
 
             ',' => {
+                let start_line = self.line_number.clone();
+                let start_col = self.column.clone();
                 tok = Token::Punctuator(
                     PunctuatorKind::from_str(",").unwrap(), 
-                    None
+                    None,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                 );
             }
 
             '.' => {
+                let start_line = self.line_number.clone();
+                let start_col = self.column.clone();
                 tok = Token::Punctuator(
                     PunctuatorKind::from_str(".").unwrap(), 
-                    None
+                    None,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                 );
             }
             
             ';' => {
+                let start_line = self.line_number.clone();
+                let start_col = self.column.clone();
                 tok = Token::Punctuator(
                     PunctuatorKind::from_str(";").unwrap(), 
-                    None
+                    None,
+                            Span::new(start_line, self.line_number, start_col, self.column)
                 );
             }
 
@@ -507,33 +660,43 @@ impl<'a> Lexer<'a> {
             '<' => {
                 match self.peek_char() {
                     '=' => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("<=").unwrap(), 
-                            Some(OperatorPrecedence::Comparison)
+                            Some(OperatorPrecedence::Comparison),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     } 
                     '<' => {
                         self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         match self.peek_char() {
                             '=' => {
                                 self.read_char();
                                 tok = Token::Punctuator(
                                     PunctuatorKind::from_str("<<=").unwrap(), 
-                                    Some(OperatorPrecedence::Assign)
+                                    Some(OperatorPrecedence::Assign),
+                                    Span::new(start_line, self.line_number, start_col, self.column)
                                 );
                             }
                             _ => {
                                 tok = Token::Punctuator(
                                     PunctuatorKind::from_str("<<").unwrap(), 
-                                    Some(OperatorPrecedence::Bitshift)
+                                    Some(OperatorPrecedence::Bitshift),
+                                    Span::new(start_line, self.line_number, start_col, self.column)
                                 );
                             }
                         }
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str("<").unwrap(), 
-                            Some(OperatorPrecedence::Comparison)
+                            Some(OperatorPrecedence::Comparison),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -542,33 +705,47 @@ impl<'a> Lexer<'a> {
             '>' => {
                 match self.peek_char() {
                     '=' => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str(">=").unwrap(), 
-                            Some(OperatorPrecedence::Comparison)
+                            Some(OperatorPrecedence::Comparison),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     } 
                     '>' => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         self.read_char();
                         match self.peek_char() {
                             '=' => {
                                 self.read_char();
+                                let start_line = self.line_number.clone();
+                                let start_col = self.column.clone();
                                 tok = Token::Punctuator(
                                     PunctuatorKind::from_str(">>=").unwrap(), 
-                                    Some(OperatorPrecedence::Assign)
+                                    Some(OperatorPrecedence::Assign),
+                                    Span::new(start_line, self.line_number, start_col, self.column)
                                 );
                             }
                             _ => {
+                                let start_line = self.line_number.clone();
+                                let start_col = self.column.clone();
                                 tok = Token::Punctuator(
                                     PunctuatorKind::from_str(">>").unwrap(), 
-                                    Some(OperatorPrecedence::Bitshift)
+                                    Some(OperatorPrecedence::Bitshift),
+                                    Span::new(start_line, self.line_number, start_col, self.column)
                                 );
                             }
                         }
                     }
                     _ => {
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
                         tok = Token::Punctuator(
                             PunctuatorKind::from_str(">").unwrap(), 
-                            Some(OperatorPrecedence::Comparison)
+                            Some(OperatorPrecedence::Comparison),
+                            Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
                 }
@@ -582,7 +759,10 @@ impl<'a> Lexer<'a> {
                     tok = self.read_identifier();
                     return tok;
                 } else {
-                    tok = Token::Illegal;
+                    tok = Token::Illegal(
+                        String::from(self.current_char),
+                        Span::new(self.line_number, self.line_number, self.column, self.column)
+                    );
                 }
             }
         }
