@@ -3,6 +3,7 @@ use colored::*;
 use viper_core::{source::{SourceFile, SourceModule}, token::Token};
 
 use viper_lexer::lexer::Lexer;
+use viper_parser::Parser;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct BuildSystem {
@@ -106,16 +107,21 @@ impl BuildSystem {
             .bright_green()
         );
 
-        let mut lexer = Lexer::new(file);
-        lexer.print_test();
-        let mut tok = lexer.next_token();
-        while tok != Token::EOF {
-            println!(
-                "{}",
-                format!("Test Token1: {}", tok).bright_white()
-            );
-            tok = lexer.next_token();
-        }
+        let mut parser = Parser::new(file);
+        
+        let stmt = parser.parse_top_level().unwrap();
+        println!("{}", stmt);
+
+//        let mut lexer = Lexer::new(file);
+//        lexer.print_test();
+//        let mut tok = lexer.next_token();
+//        while tok != Token::EOF {
+//            println!(
+//                "{}",
+//                format!("Test Token1: {}", tok).bright_white()
+//            );
+//            tok = lexer.next_token();
+//        }
     }
 }
 

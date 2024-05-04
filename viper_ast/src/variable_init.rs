@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fmt::Display, sync::Arc};
 use viper_core::token::Token;
 
 use crate::ExprNode;
@@ -28,5 +28,15 @@ impl VariableInitialization {
             dtype,
             values,
         }
+    }
+}
+
+impl Display for VariableInitialization {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "let {}: {} = {}", 
+            self.targets[0].inner,
+            self.dtype,
+            self.values[0].inner
+        )
     }
 }

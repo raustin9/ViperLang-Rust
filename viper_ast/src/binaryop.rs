@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use viper_core::token::{PunctuatorKind, Token};
 
 /// The valid operators for binary expressions in the Viper programming language
@@ -80,6 +82,70 @@ impl From<Token> for BinaryOperator {
                 }
             }
             _ => BinaryOperator::InvalidBinary,
+        }
+    }
+}
+
+impl Display for BinaryOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Minus => {
+                write!(f, "-")
+            }
+            Self::Plus => {
+                write!(f, "+")
+            }
+            Self::Times => {
+                write!(f, "*")
+            }
+            Self::Divide => {
+                write!(f, "/")
+            }
+            Self::Modulo => {
+                write!(f, "%")
+            }
+            Self::LessThan => {
+                write!(f, "<")
+            }
+            Self::GreaterThan => {
+                write!(f, ">")
+            }
+            Self::EqualTo => {
+                write!(f, "==")
+            }
+            Self::NotEqualTo => {
+                write!(f, "!=")
+            }
+            Self::LessThanEqualTo => {
+                write!(f, "<=")
+            }
+            Self::GreaterThanEqualTo => {
+                write!(f, ">=")
+            }
+            Self::LogicalAnd => {
+                write!(f, "&&")
+            }
+            Self::LogicalOr => {
+                write!(f, "||")
+            }
+            Self::BShiftRight => {
+                write!(f, ">>")
+            }
+            Self::BShiftLeft => {
+                write!(f, "<<")
+            }
+            Self::BinAnd => {
+                write!(f, "&")
+            }
+            Self::BinOr => {
+                write!(f, "|")
+            }
+            Self::BinXor => {
+                write!(f, "^")
+            }
+            Self::InvalidBinary => {
+                write!(f, "Invalid Binary Operator")
+            }
         }
     }
 }

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use viper_core::token::{PunctuatorKind, Token};
 
 
@@ -32,6 +34,17 @@ impl From<Token> for UnaryOperator {
                 }
             }
             _ => UnaryOperator::InvalidUnary,
+        }
+    }
+}
+
+impl Display for UnaryOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Minus => write!(f, "-"),
+            Self::BinaryNot=> write!(f, "~"),
+            Self::LogicalNot=> write!(f, "!"),
+            Self::InvalidUnary=> write!(f, "Invalid Unary Operator"),
         }
     }
 }

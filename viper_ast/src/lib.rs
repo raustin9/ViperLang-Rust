@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fmt::Display, sync::Arc};
 use viper_core::span::Span;
 
 
@@ -52,6 +52,15 @@ pub enum Stmt {
     ExpressionStatement,
 }
 
+impl std::fmt::Display for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::VariableInitialization(init) => write!(f, "{init}"),
+            _ => write!(f, "Not handled yet"),
+        }
+    }
+}
+
 /// Represents expression types in Viper
 ///
 /// Expressions are pieces of code that hold [or evaluate to] values
@@ -73,6 +82,43 @@ pub enum Expr {
     MemberFieldAccess(Arc<Field>),
     BinaryOperation(BinaryOperator, Arc<ExprNode>, Arc<ExprNode>),
     UnaryOperation(UnaryOperator, Arc<ExprNode>),
+}
+
+impl std::fmt::Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::True => {
+                write!(f, "true")
+            }
+            Self::False => {
+                write!(f, "false")
+            }
+            Self::Integer(value) => {
+                write!(f, "{value}")
+            }
+            Self::Float(value) => {
+                write!(f, "{value}")
+            }
+            Self::Identifier(name) => {
+                write!(f, "{name}")
+            }
+            Self::FunctionCall(function) => {
+                write!(f, "{}", *function)
+            }
+            Self::MethodCall(method) => {
+                write!(f, "{}", *method)
+            }
+            Self::MemberFieldAccess(field) => {
+                write!(f, "{}", *field)
+            }
+            Self::BinaryOperation(op, lhs, rhs) => {
+                write!(f, "[{} {} {}]", lhs.inner, op, rhs.inner)
+            }
+            Self::UnaryOperation(op, expr) => {
+                write!(f, "{}{}", op, expr.inner)
+            }
+        }
+    }
 }
 
 /// The floating point data types
@@ -105,4 +151,15 @@ pub enum IntegerType {
 }
 
 pub type StmtNode = Node<Stmt>;
+impl Display for StmtNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.inner)
+    }
+}
+
 pub type ExprNode = Node<Expr>;
+impl Display for ExprNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.inner)
+    }
+}
