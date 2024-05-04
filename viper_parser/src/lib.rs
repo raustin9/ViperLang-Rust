@@ -74,17 +74,18 @@ impl<'a> Parser<'a> {
                 self.parse_expr_identifier()
             }
 
-            Token::NumericLiteral(value, span) => {
-                match value {
-                    NumericValue::Integer(ivalue) => {
-                        self.advance()?;
-                        Ok(ExprNode::new(Expr::Integer(ivalue), span))
-                    }
-
-                    NumericValue::FloatingPoint(fvalue) => {
-                        Ok(ExprNode::new(Expr::Float(fvalue), span))
-                    }
-                }
+            Token::NumericLiteral(value, _span) => {
+                self.parse_number_literal(value)
+//                match value {
+//                    NumericValue::Integer(ivalue) => {
+//                        self.advance()?;
+//                        Ok(ExprNode::new(Expr::Integer(ivalue), span))
+//                    }
+//
+//                    NumericValue::FloatingPoint(fvalue) => {
+//                        Ok(ExprNode::new(Expr::Float(fvalue), span))
+//                    }
+//                }
             }
             
             _ => {
@@ -141,13 +142,19 @@ impl<'a> Parser<'a> {
 
     fn parse_expr_binary(&mut self, lhs: &mut ExprNode, min_prec: &OperatorPrecedence) -> Result<ExprNode, ViperError> {
         let op = self.current_token.clone();
-
         self.advance()?;
 
         let mut rhs = self.parse_primary_expr()?;
         let next_prec = match get_operator_precedence(&self.current_token) {
             Some(p) => p,
-            None => return Err(ViperError::ParserError),
+            None => {
+                return Ok(
+                    ExprNode::new(
+                        Expr::BinaryOperation(BinaryOperator::from(op.clone()), Arc::from(lhs.clone()), Arc::from(rhs)), 
+                        Span::dummy()
+                    )
+                );
+            }
         };
 
         if next_prec > *min_prec {
@@ -177,6 +184,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_number_literal(&mut self, value: NumericValue) -> Result<ExprNode, ViperError> {
+        println!("Parsing number");
         self.advance()?;
         match value {
             NumericValue::Integer(value) => {
