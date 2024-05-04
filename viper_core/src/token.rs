@@ -187,7 +187,7 @@ impl KeywordKind {
 pub enum OperatorPrecedence {
     #[default]
     Lowest = 0,
-    Assign,
+    // Assign,
     LogicalAndOr,
     Comparison,
     AddSub,
@@ -308,7 +308,7 @@ impl OperatorPrecedence {
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Lowest => return "Lowest",
-            Self::Assign => return "Assign",
+            // Self::Assign => return "Assign",
             Self::LogicalAndOr => return "LogicalAndOr",
             Self::Comparison => return "Comparison",
             Self::AddSub => return "AddSub",

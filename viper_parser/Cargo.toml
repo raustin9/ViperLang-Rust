@@ -1,0 +1,16 @@
+[package]
+name = "viper_parser"
+version.workspace = true
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+viper_core = { path = "../viper_core" }
+viper_lexer = { path = "../viper_lexer" }
+viper_ast = { path = "../viper_ast" }
+lazy_static = { workspace = true }
+clap = { workspace = true }
+substring = { workspace = true }

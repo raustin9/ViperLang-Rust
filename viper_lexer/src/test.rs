@@ -99,7 +99,8 @@ mod test {
             
             Token::Punctuator(
                 PunctuatorKind::from_str("=").unwrap(), 
-                Some(OperatorPrecedence::Assign),
+                None,
+                // Some(OperatorPrecedence::Assign),
                 Span::dummy()
             ),
 
@@ -144,7 +145,8 @@ mod test {
             
             Token::Punctuator(
                 PunctuatorKind::from_str("=").unwrap(), 
-                Some(OperatorPrecedence::Assign),
+                None,
+                // Some(OperatorPrecedence::Assign),
                 Span::dummy()
             ),
 
@@ -166,7 +168,8 @@ mod test {
             
             Token::Punctuator(
                 PunctuatorKind::from_str("=").unwrap(), 
-                Some(OperatorPrecedence::Assign),
+                None,
+                // Some(OperatorPrecedence::Assign),
                 Span::dummy()
             ),
 

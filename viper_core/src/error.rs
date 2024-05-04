@@ -5,6 +5,7 @@ use thiserror::Error;
 #[derive(Debug, Error, Display)]
 pub enum ViperError {
     IoError,
+    ParserError,
 }
 
 impl ViperError {
