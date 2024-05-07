@@ -17,15 +17,17 @@ use crate::ExprNode;
 pub struct VariableInitialization {
     targets: Vec<Arc<ExprNode>>,
     dtype: Token,
+    mutable: bool,
     values: Vec<Arc<ExprNode>>,
 }
 
 impl VariableInitialization {
     /// Create a new VariableInitialization
-    pub fn new(targets: Vec<Arc<ExprNode>>, dtype: Token, values: Vec<Arc<ExprNode>>) -> VariableInitialization {
+    pub fn new(targets: Vec<Arc<ExprNode>>, dtype: Token, mutable: bool, values: Vec<Arc<ExprNode>>) -> VariableInitialization {
         VariableInitialization {
             targets,
             dtype,
+            mutable,
             values,
         }
     }
@@ -33,7 +35,8 @@ impl VariableInitialization {
 
 impl Display for VariableInitialization {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "let {}: {} = {}", 
+        write!(f, "let {} {}: {} = {}", 
+            if self.mutable {"mut"} else {""},
             self.targets[0].inner,
             self.dtype,
             self.values[0].inner

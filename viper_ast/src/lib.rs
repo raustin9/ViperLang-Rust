@@ -1,9 +1,9 @@
 use std::{fmt::Display, sync::Arc};
-use viper_core::span::Span;
+use viper_core::{_type::Type, span::Span};
 
 
-pub mod functioncall;
-pub use functioncall::*;
+pub mod procedurecall;
+pub use procedurecall::*;
 
 pub mod binaryop;
 pub use binaryop::*;
@@ -17,13 +17,17 @@ pub use methodcall::*;
 pub mod field;
 pub use field::*;
 
+pub mod binding;
+pub use binding::*;
+
 pub mod variable_init;
 pub use variable_init::*;
 
-#[derive(Debug)]
-pub struct AST {
-}
+pub mod typeast;
+pub use typeast::*;
 
+pub mod proceduredef;
+pub use proceduredef::*;
 
 /// Represents a node in the Abstract Syntax tree for the Viper programming language
 #[derive(Debug, Clone)]
@@ -44,7 +48,7 @@ impl <T> Node<T> {
 
 pub enum Stmt {
     VariableInitialization(VariableInitialization),
-    FunctionDefinition,
+    ProcedureDefinition,
     Conditional,
     WhileLoop,
     DoWhileLoop,
@@ -70,19 +74,96 @@ impl std::fmt::Display for Stmt {
 /// NOTE: Literals are also expressions that evaluate to themselves
 /// 
 /// eg: 5 evaluates to 5, "test" evaluates to "test"
+pub type Ident = String;
+
+//#[derive(Clone, Debug)]
+//pub enum Expr {
+//    Literal {
+//        literal: Literal,
+//        ty: Type,
+//        span: Span,
+//    },
+//    Closure {
+//        proc: ProcedureCall,
+//        kind: ProcedureKind,
+//        ty: Type,
+//        span: Span,
+//    },
+//    Block {
+//        statements: Vec<Expr>,
+//        ty: Type,
+//        span: Span,
+//    },
+//    Let {
+//        binding: Binding,
+//        ident: Vec<Expr>,
+//        value: Arc<Expr>,
+//        types: Vec<Type>,
+//        span: Span,
+//    },
+//    Variable {
+//        value: Ident,
+//        decl: Span,
+//        // TODO: generics
+//        ty: Type,
+//        span: Span,
+//    },
+//    ProcedureCall {
+//        proc: Arc<Expr>,
+//        args: Vec<Expr>,
+//        ty: Type,
+//        span: Span,
+//    },
+//    If {
+//        cond: Arc<Expr>,
+//        then: Arc<Expr>,
+//        ty: Type,
+//        span: Span,
+//    },
+//    Match {
+//        subject: Arc<Expr>,
+//        arms: TypeAST,
+//        ty: Type,
+//        span: Span,
+//    },
+//    Tuple {
+//        elements: Vec<Expr>,
+//        ty: Type,
+//        span: Span,
+//    },
+//    EnumDefinition {
+//        // TODO: Enums
+//    },
+//}
+
 #[derive(Clone, Debug)]
 pub enum Expr {
     True,
     False,
     Integer(u64),
     Float(f64),
+    Let(VariableInitialization),
     Identifier(String),
-    FunctionCall(Arc<FunctionCall>),
+    ProcedureCall(Arc<ProcedureCall>),
     MethodCall(Arc<MethodCall>),
     MemberFieldAccess(Arc<Field>),
     BinaryOperation(BinaryOperator, Arc<ExprNode>, Arc<ExprNode>),
     UnaryOperation(UnaryOperator, Arc<ExprNode>),
+} 
+
+/// Represents a literal type in Viper
+/// 1, true, false, "string literal", 'c', [1, 3, 5]
+#[derive(Clone, Debug, PartialEq)]
+pub enum Literal {
+    Integer(u64),
+    Float(f64),
+    Bool(bool),
+    String(StrType),
+    Char(char),
+    Slice, // TODO
 }
+
+pub type StrType = String;
 
 impl std::fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -102,7 +183,7 @@ impl std::fmt::Display for Expr {
             Self::Identifier(name) => {
                 write!(f, "{name}")
             }
-            Self::FunctionCall(function) => {
+            Self::ProcedureCall(function) => {
                 write!(f, "{}", *function)
             }
             Self::MethodCall(method) => {
@@ -113,6 +194,9 @@ impl std::fmt::Display for Expr {
             }
             Self::BinaryOperation(op, lhs, rhs) => {
                 write!(f, "[{} {} {}]", lhs.inner, op, rhs.inner)
+            }
+            Self::Let(init) => {
+                write!(f, "{}", init)
             }
             Self::UnaryOperation(op, expr) => {
                 write!(f, "{}{}", op, expr.inner)
@@ -148,13 +232,6 @@ pub enum IntegerType {
     UInt32,
     /// 64 bit unsigned integer
     UInt64,
-}
-
-pub type StmtNode = Node<Stmt>;
-impl Display for StmtNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.inner)
-    }
 }
 
 pub type ExprNode = Node<Expr>;

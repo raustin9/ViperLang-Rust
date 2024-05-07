@@ -2,7 +2,7 @@ pub mod test;
 
 use std::{mem::swap, sync::Arc};
 
-use viper_ast::{BinaryOperator, Expr, ExprNode, Stmt, StmtNode, UnaryOperator, VariableInitialization};
+use viper_ast::{BinaryOperator, Expr, ExprNode, Stmt, UnaryOperator, VariableInitialization};
 use viper_core::{error::ViperError, source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
@@ -35,7 +35,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parse a top-level (Program Scope) statement of a Viper source file
-    pub fn parse_top_level(&mut self) -> Result<StmtNode, ViperError> {
+    pub fn parse_top_level(&mut self) -> Result<ExprNode, ViperError> {
         self.advance()?;
         match self.current_token {
             Token::Keyword(keyword, _) => {
@@ -106,7 +106,7 @@ impl<'a> Parser<'a> {
 
     /// Parse a variable declaration statement
     /// `let...`
-    fn parse_variable_initialization(&mut self) -> Result<StmtNode, ViperError> {
+    fn parse_variable_initialization(&mut self) -> Result<ExprNode, ViperError> {
         self.advance()?; // Eat the `let` token
 
         let ident_expr = self.parse_expr();
@@ -120,10 +120,15 @@ impl<'a> Parser<'a> {
         let expr = self.parse_expr().unwrap();
 
         self.advance()?; // eat the ';'
-
+        
         return Ok(
-            StmtNode::new(
-                Stmt::VariableInitialization(VariableInitialization::new(vec!(Arc::from(ident_expr.unwrap())), dtype, vec!(Arc::from(expr)))), 
+            ExprNode::new(
+                Expr::Let(VariableInitialization::new(
+                    vec!(Arc::from(ident_expr.unwrap())),
+                    dtype,
+                    false,
+                    vec!(Arc::from(expr))
+                )),
                 Span::dummy()
             )
         );

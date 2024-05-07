@@ -5,3 +5,4 @@ pub mod emitter;
 pub mod span;
 pub mod symbol;
 pub mod datatype;
+pub mod _type;

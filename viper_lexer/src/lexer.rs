@@ -391,6 +391,16 @@ impl<'a> Lexer<'a> {
                             Span::new(start_line, self.line_number, start_col, self.column)
                         );
                     }
+                    '>' => {
+                        self.read_char();
+                        let start_line = self.line_number.clone();
+                        let start_col = self.column.clone();
+                        tok = Token::Punctuator(
+                            PunctuatorKind::from_str("=>").unwrap(), 
+                            Some(OperatorPrecedence::Comparison),
+                            Span::new(start_line, self.line_number, start_col, self.column)
+                        );
+                    }
                     _ => {
                         let start_line = self.line_number.clone();
                         let start_col = self.column.clone();

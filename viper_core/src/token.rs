@@ -251,6 +251,7 @@ pub enum PunctuatorKind {
     Colon,
     DoubleColon,
     SemiColon,
+    FatArrow,
 }
 
 impl PunctuatorKind {
@@ -298,6 +299,7 @@ impl PunctuatorKind {
             Self::Colon => return ":",
             Self::DoubleColon => return "::",
             Self::SemiColon => return ";",
+            Self::FatArrow => return "=>",
         }
     }
 }
