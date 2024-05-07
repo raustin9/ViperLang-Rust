@@ -21,7 +21,7 @@ mod tests {
     #[test]
     fn parser_binary() {
         let test_file = SourceFile::new_dummy(
-            "let i: i32 = 5 + 2 * 3;", 
+            "let i: i32 = 5 + 2 * -3;", 
             "Test file"
         );
         let file_ptr = Arc::from(test_file);

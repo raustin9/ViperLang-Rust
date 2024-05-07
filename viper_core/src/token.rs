@@ -102,6 +102,7 @@ impl Display for Token {
 pub enum KeywordKind {
     /// Declarator keywords
     Define,
+    Proc,
     Let,
     Mut,
     Return,
@@ -145,6 +146,7 @@ impl KeywordKind {
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Define => return "define",
+            Self::Proc => return "proc",
             Self::Let => return "let",
             Self::Mut => return "mut",
             Self::Return => return "return",

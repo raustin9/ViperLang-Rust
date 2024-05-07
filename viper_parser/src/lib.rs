@@ -2,7 +2,7 @@ pub mod test;
 
 use std::{mem::swap, sync::Arc};
 
-use viper_ast::{BinaryOperator, Expr, ExprNode, Stmt, UnaryOperator, VariableInitialization};
+use viper_ast::{BinaryOperator, Expr, ExprNode, UnaryOperator, VariableInitialization};
 use viper_core::{error::ViperError, source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
@@ -56,6 +56,8 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Parse expressions at their tighest bindings
+    /// These 'primary' expressions get used to form larger ones
     fn parse_primary_expr(&mut self) -> Result<ExprNode, ViperError> {
         match self.current_token.clone() {
             Token::Punctuator(kind, _precedence, _span) => {
@@ -76,16 +78,6 @@ impl<'a> Parser<'a> {
 
             Token::NumericLiteral(value, _span) => {
                 self.parse_number_literal(value)
-//                match value {
-//                    NumericValue::Integer(ivalue) => {
-//                        self.advance()?;
-//                        Ok(ExprNode::new(Expr::Integer(ivalue), span))
-//                    }
-//
-//                    NumericValue::FloatingPoint(fvalue) => {
-//                        Ok(ExprNode::new(Expr::Float(fvalue), span))
-//                    }
-//                }
             }
             
             _ => {
@@ -132,6 +124,13 @@ impl<'a> Parser<'a> {
                 Span::dummy()
             )
         );
+    }
+
+    /// Parse a procedure definition
+    fn parse_procedure_definition(&mut self) -> Result<ExprNode, ViperError> {
+        self.advance()?; // eat 'proc'
+
+        return Err(ViperError::ParserError);
     }
 
     /// Parse an expression

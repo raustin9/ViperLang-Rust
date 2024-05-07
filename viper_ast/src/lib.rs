@@ -46,25 +46,6 @@ impl <T> Node<T> {
     }
 }
 
-pub enum Stmt {
-    VariableInitialization(VariableInitialization),
-    ProcedureDefinition,
-    Conditional,
-    WhileLoop,
-    DoWhileLoop,
-    ForLoop,
-    ExpressionStatement,
-}
-
-impl std::fmt::Display for Stmt {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::VariableInitialization(init) => write!(f, "{init}"),
-            _ => write!(f, "Not handled yet"),
-        }
-    }
-}
-
 /// Represents expression types in Viper
 ///
 /// Expressions are pieces of code that hold [or evaluate to] values
@@ -142,6 +123,7 @@ pub enum Expr {
     False,
     Integer(u64),
     Float(f64),
+    ProcedureDefinition(ProcedureDef),
     Let(VariableInitialization),
     Identifier(String),
     ProcedureCall(Arc<ProcedureCall>),
@@ -185,6 +167,10 @@ impl std::fmt::Display for Expr {
             }
             Self::ProcedureCall(function) => {
                 write!(f, "{}", *function)
+            }
+            Self::ProcedureDefinition(def) => {
+                // TODO
+                write!(f, "{}", def)
             }
             Self::MethodCall(method) => {
                 write!(f, "{}", *method)
