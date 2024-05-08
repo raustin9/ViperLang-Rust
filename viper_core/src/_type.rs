@@ -13,7 +13,6 @@ pub enum Type {
         bound: Vec<Bound>,
         ret: Arc<Type>,
     },
-    // Var(i32),
 }
 
 /// thanks https://github.com/borgo-lang/borgo/blob/main/compiler/src/type_.rs#L27

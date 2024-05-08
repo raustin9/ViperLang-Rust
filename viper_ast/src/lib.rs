@@ -1,6 +1,11 @@
 use std::{fmt::Display, sync::Arc};
 use viper_core::{_type::Type, span::Span};
 
+pub mod scope;
+pub use scope::*;
+
+pub mod codeblock;
+pub use codeblock::*;
 
 pub mod procedurecall;
 pub use procedurecall::*;
@@ -25,6 +30,9 @@ pub use variable_init::*;
 
 pub mod typeast;
 pub use typeast::*;
+
+pub mod whileloop;
+pub use whileloop::*;
 
 pub mod proceduredef;
 pub use proceduredef::*;
@@ -125,12 +133,14 @@ pub enum Expr {
     Float(f64),
     ProcedureDefinition(ProcedureDef),
     Let(VariableInitialization),
+    WhileLoop(WhileLoop),
     Identifier(String),
     ProcedureCall(Arc<ProcedureCall>),
     MethodCall(Arc<MethodCall>),
     MemberFieldAccess(Arc<Field>),
     BinaryOperation(BinaryOperator, Arc<ExprNode>, Arc<ExprNode>),
     UnaryOperation(UnaryOperator, Arc<ExprNode>),
+    CodeBlock(CodeBlock),
 } 
 
 /// Represents a literal type in Viper
@@ -164,6 +174,12 @@ impl std::fmt::Display for Expr {
             }
             Self::Identifier(name) => {
                 write!(f, "{name}")
+            }
+            Self::WhileLoop(_loop_info) => {
+                todo!()
+            }
+            Self::CodeBlock(_block_info) => {
+                todo!()
             }
             Self::ProcedureCall(function) => {
                 write!(f, "{}", *function)

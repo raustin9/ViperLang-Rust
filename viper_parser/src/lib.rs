@@ -2,8 +2,8 @@ pub mod test;
 
 use std::{mem::swap, sync::Arc};
 
-use viper_ast::{BinaryOperator, Expr, ExprNode, UnaryOperator, VariableInitialization};
-use viper_core::{error::ViperError, source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
+use viper_ast::{BinaryOperator, Binding, CodeBlock, Expr, ExprNode, ProcedureDef, ProcedureKind, UnaryOperator, VariableInitialization, WhileLoop};
+use viper_core::{error::ViperError, scope::Scope,  source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
 
@@ -44,6 +44,10 @@ impl<'a> Parser<'a> {
                     KeywordKind::Let => {
                         println!("Parsing let statement");
                         return self.parse_variable_initialization();
+                    }
+                    KeywordKind::Define => {
+                        println!("Parsing function definition");
+                        return self.parse_procedure_definition();
                     }
                     _ => {
                         return Err(ViperError::ParserError);
@@ -126,11 +130,160 @@ impl<'a> Parser<'a> {
         );
     }
 
-    /// Parse a procedure definition
-    fn parse_procedure_definition(&mut self) -> Result<ExprNode, ViperError> {
-        self.advance()?; // eat 'proc'
+    fn parse_expr_stmt(&mut self) -> Result<ExprNode, ViperError> {
+        match &self.current_token {
+            Token::Keyword(kind, span) => {
+                match kind {
+                    // Variable initialization
+                    KeywordKind::Let => {
+                        return self.parse_variable_initialization();
+                    }
+                    KeywordKind::While => {
+                        return self.parse_while_loop();
+                    }
+                    KeywordKind::Yield => {
+                        return self.parse_yield();
+                    }
+                    KeywordKind::Return => {
+                        return self.parse_return();
+                    }
+                    KeywordKind::Match => {
+                        return self.parse_match();
+                    }
+                    KeywordKind::Defer => {
+                        return self.parse_defer();
+                    }
+                    KeywordKind::Switch => {
+                        return self.parse_switch();
+                    }
 
-        return Err(ViperError::ParserError);
+                    _ => {
+                        return Err(ViperError::ParserError);
+                    }
+                }
+            }
+
+            _ => {
+                return self.parse_expr();
+            }
+        }
+    }
+
+    /// Parse a conditional while loop for Viper
+    /// `while [condition] {...}`
+    /// `while 1 == 2-1 {...}`
+    fn parse_while_loop(&mut self) -> Result<ExprNode, ViperError> {
+        self.expect_keyword(KeywordKind::While);
+
+        let condition = self.parse_expr().unwrap();
+
+        // let body = self.parse_expr_block().unwrap();
+        todo!();
+        // return Ok(ExprNode::new(Expr::WhileLoop(WhileLoop::new(condition, body)), Span::dummy()));
+    }
+
+    fn parse_match(&mut self) -> Result<ExprNode, ViperError> {
+        todo!();
+    }
+    
+    fn parse_defer(&mut self) -> Result<ExprNode, ViperError> {
+        todo!();
+    }
+    
+    fn parse_switch(&mut self) -> Result<ExprNode, ViperError> {
+        todo!();
+    }
+    
+    fn parse_return(&mut self) -> Result<ExprNode, ViperError> {
+        todo!();
+    }
+
+    fn parse_yield(&mut self) -> Result<ExprNode, ViperError> {
+        todo!();
+    }
+
+    /// Parse a procedure definition
+    /// This is for top-level procedures only not lambdas
+    fn parse_procedure_definition(&mut self) -> Result<ExprNode, ViperError> {
+        self.advance()?; // eat 'define'
+        let mut params: Vec<Binding> = vec![];
+
+        let ident = match self.current_token.clone() {
+            Token::Identifier(name, _span) => {
+                name
+            }
+            _ => {
+                return Err(ViperError::ParserError);
+            }
+        };
+
+        self.advance()?; // eat the identifier
+
+        // Parse the parameters to the procedure
+        self.advance()?; // eat the '('
+        while &self.current_token != PunctuatorKind::RParen {
+            params.push(self.parse_binding().unwrap());
+        }
+        self.expect_punctuator(PunctuatorKind::RParen)?;
+
+        // TODO: Actually parse return type
+        let ret = self.current_token.clone();
+        self.advance()?;
+
+        // Parse the function body 
+        let body = self.parse_expr_block(Some(self.source_file.scope()))?;
+
+        Ok(ExprNode::new(Expr::ProcedureDefinition(
+            ProcedureDef::new(
+                ident.clone(), 
+                Arc::from(params.as_slice()), 
+                Arc::from(body), 
+                ret.clone()
+            )
+        ), Span::dummy()))
+    }
+
+    /// Parse a code expression block
+    /// {
+    ///     let i: 32 = 10;
+    ///     yield i + 15;
+    /// }
+    /// Expression blocks evaluate to values. This 
+    /// is what the 'yield' keyword specifies.
+    /// If no expression is yielded, then it yields
+    /// the () unit type
+    fn parse_expr_block(&mut self, parent: Option<Arc<Scope>>) -> Result<ExprNode, ViperError> {
+        self.expect_punctuator(PunctuatorKind::LSquirly)?;
+        let mut block = CodeBlock::new(parent);
+      
+        // Read the expressions within the block
+        while self.current_token != PunctuatorKind::RSquirly {
+            block.add_expr(self.parse_expr_stmt().unwrap());
+        }
+        self.expect_punctuator(PunctuatorKind::RSquirly)?;
+       
+        Ok(ExprNode::new(Expr::CodeBlock(block), Span::dummy()))
+    }
+
+    /// Parse a binding in Viper
+    /// a [Binding] is binding a type to an identifier
+    /// `i: i32`
+    /// `j: User`
+    fn parse_binding(&mut self) -> Result<Binding, ViperError> {
+        let ident = match self.current_token.clone() {
+            Token::Identifier(name, _span) => {
+                name
+            }
+            _ => {
+                println!("Invalid token: '{}'. Expected identifier", &self.current_token);
+                return Err(ViperError::ParserError);
+            }
+        };
+        self.expect(&Token::Identifier("".into(), Span::dummy()))?;
+
+        let ty = &self.current_token;
+   
+        Ok(Binding::new(ident.into(), ty.clone()))
     }
 
     /// Parse an expression
@@ -144,6 +297,9 @@ impl<'a> Parser<'a> {
         return Ok(lhs);
     }
 
+    /// Parse an expression with an 'infix' operator
+    /// a + b
+    /// foo() - bar()
     fn parse_expr_binary(&mut self, lhs: &mut ExprNode, min_prec: &OperatorPrecedence) -> Result<ExprNode, ViperError> {
         let op = self.current_token.clone();
         self.advance()?;
@@ -201,17 +357,47 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn expect_punctuator(&mut self, expected: PunctuatorKind) -> Result<(), ViperError> {
+        if &self.current_token != expected {
+            println!("Invalid Token {}. Expected {}", &self.current_token, expected);
+            return Err(ViperError::ParserError);
+        }
+
+        println!("Eating: '{}'", self.current_token);
+        self.current_token = self.lexer.next_token();
+
+        Ok(())
+    }
+
+    fn expect_keyword(&mut self, expected: KeywordKind) -> Result<(), ViperError> {
+        if self.current_token != expected {
+            println!("Invalid Token {}. Expected {}", &self.current_token, expected);
+            return Err(ViperError::ParserError);
+        }
+
+        println!("Eating: '{}'", self.current_token);
+        self.current_token = self.lexer.next_token();
+
+        Ok(())
+    }
+
+    /// Advance to the next token if we match the expected to the current token
+    /// Otherwise we return an Error
+    fn expect(&mut self, expected: &Token) -> Result<(), ViperError> {
+        if expected != &self.current_token {
+            println!("Invalid Token {}. Expected {}", &self.current_token, expected);
+            return Err(ViperError::ParserError);
+        }
+
+        println!("Eating: '{}'", self.current_token);
+        self.current_token = self.lexer.next_token();
+
+        Ok(())
+    }
+
     fn advance(&mut self) -> Result<(), ViperError> {
         println!("Eating: '{}'", self.current_token);
         self.current_token = self.lexer.next_token();
-//        self.current_token = match self.peek_token {
-//            Token::EOF => self.lexer.next_token(),
-//            _ => {
-//                let mut peek = Token::EOF;
-//                swap(&mut peek, &mut self.peek_token);
-//                peek
-//            }
-//        };
 
         Ok(())
     }

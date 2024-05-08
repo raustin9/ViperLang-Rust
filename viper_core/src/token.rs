@@ -66,6 +66,116 @@ impl PartialEq for Token {
     }
 }
 
+impl PartialEq<PunctuatorKind> for &Token {
+    fn eq(&self, other: &PunctuatorKind) -> bool {
+        match self {
+            Token::Punctuator(kind, _, _) => {
+                if kind == other {
+                    return true;
+                }
+                return false;
+            }
+            _ => false,
+        }
+    }
+
+    fn ne(&self, other: &PunctuatorKind) -> bool {
+        match *self {
+            Token::Punctuator(kind, _, _) => {
+                if kind == other {
+                    return false;
+                }
+                return true;
+            }
+            _ => true,
+        }
+    }
+}
+
+impl PartialEq<KeywordKind> for &Token {
+    fn eq(&self, other: &KeywordKind) -> bool {
+        match self {
+            Token::Keyword(kind, _span) => {
+                if kind == other {
+                    return true;
+                }
+                return false;
+            }
+            _ => return false,
+        }
+    }
+
+    fn ne(&self, other: &KeywordKind) -> bool {
+        match self {
+            Token::Keyword(kind, _span) => {
+                if kind == other {
+                    return false;
+                }
+                return true;
+            }
+            _ => true,
+        }
+    }
+}
+
+impl PartialEq<PunctuatorKind> for Token {
+    fn eq(&self, other: &PunctuatorKind) -> bool {
+        match self {
+            Self::Punctuator(kind, _, _) => {
+                if kind == other {
+                    return true;
+                }
+                return false;
+            }
+            _ => false,
+        }
+    }
+
+    fn ne(&self, other: &PunctuatorKind) -> bool {
+        match self {
+            Self::Punctuator(kind, _, _) => {
+                if kind == other {
+                    return false;
+                }
+                return true;
+            }
+            _ => true,
+        }
+    }
+}
+
+impl PartialEq<KeywordKind> for Token {
+    fn eq(&self, other: &KeywordKind) -> bool {
+        match self {
+            Self::Keyword(kind, _span) => {
+                if kind == other {
+                    return true;
+                }
+                return false;
+            }
+            _ => return false,
+        }
+    }
+
+    fn ne(&self, other: &KeywordKind) -> bool {
+        match self {
+            Self::Keyword(kind, _span) => {
+                if kind == other {
+                    return false;
+                }
+                return true;
+            }
+            _ => true,
+        }
+    }
+}
+
+impl Display for PunctuatorKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
 impl Display for Token {
     fn fmt(&self, fout: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -102,7 +212,6 @@ impl Display for Token {
 pub enum KeywordKind {
     /// Declarator keywords
     Define,
-    Proc,
     Let,
     Mut,
     Return,
@@ -126,6 +235,8 @@ pub enum KeywordKind {
     Break,
     Case,
     Default,
+    Defer,
+    Yield,
   
     /// Type Definition Keywords
     Byte,
@@ -146,7 +257,8 @@ impl KeywordKind {
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Define => return "define",
-            Self::Proc => return "proc",
+            Self::Defer => return "defer",
+            Self::Yield => return "yield",
             Self::Let => return "let",
             Self::Mut => return "mut",
             Self::Return => return "return",
@@ -183,6 +295,11 @@ impl KeywordKind {
     }
 }
 
+impl Display for KeywordKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
 
 /// Operator precedences for binding expressions
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, EnumIter, Default)]

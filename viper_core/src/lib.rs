@@ -4,5 +4,6 @@ pub mod error;
 pub mod emitter;
 pub mod span;
 pub mod symbol;
+pub mod scope;
 pub mod datatype;
 pub mod _type;

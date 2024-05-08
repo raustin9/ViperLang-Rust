@@ -1,11 +1,11 @@
 use std::{ffi::OsStr, fs, path::PathBuf, sync::Arc};
 use colored::*;
-use viper_core::{source::{SourceFile, SourceModule}, token::Token};
+use viper_core::{scope::Scope, source::{SourceFile, SourceModule}, token::Token};
 
 use viper_lexer::lexer::Lexer;
 use viper_parser::Parser;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, PartialEq)]
 pub struct BuildSystem {
     /// The specified path to compile
     path: PathBuf,
@@ -75,7 +75,7 @@ impl BuildSystem {
             }
 
             None => {
-                let file = SourceFile::new(self.path.clone());
+                let file = SourceFile::new(self.path.clone(), &Arc::from(Scope::new(None)));
                 match file {
                     Ok(source_file) => {
                         let file_ptr = Arc::new(source_file);

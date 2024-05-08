@@ -1,6 +1,8 @@
-use std::fmt::Display;
+use std::{fmt::Display, sync::Arc};
 
-use viper_core::_type::Type;
+// use viper_core::_type::Type;
+
+use viper_core::token::Token;
 
 use crate::{Binding, ExprNode, Ident};
 
@@ -9,22 +11,11 @@ use crate::{Binding, ExprNode, Ident};
 pub enum ProcedureKind {
     /// Top-level procedure that is defined at program or file scope
     /// `
-    /// proc main(params) {
+    /// define main(params) {
     ///     ...
     /// }
     /// `
     TopLevel,
-   
-    /// Functions defined within another function
-    /// `
-    /// proc main() {
-    ///     proc test() {
-    ///         return 6;
-    ///     }
-    ///     ...
-    /// }
-    /// `
-    Inline,
 
     /// Lambda functions
     /// `
@@ -38,26 +29,34 @@ pub enum ProcedureKind {
 #[derive(Clone, Debug)]
 pub struct ProcedureDef {
     name: Ident,
-    parameters: Vec<Binding>,
-    statements: Vec<ExprNode>,
-    ty: Type,
-    ret: Type,
+    parameters: Arc<[Binding]>,
+    body: Arc<ExprNode>,
+    ret: Token,
+}
+
+impl ProcedureDef {
+    pub fn new(name: Ident, parameters: Arc<[Binding]>, body: Arc<ExprNode>, ret: Token) -> ProcedureDef {
+        ProcedureDef {
+            name,
+            parameters,
+            body,
+            ret
+        }
+    }
 }
 
 impl Display for ProcedureDef {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut procstr = format!("proc {}(", self.name);
-        let mut body = String::from("");
+        let mut procstr = format!("define {}(", self.name);
 
-        for param in &self.parameters {
+        let pit = self.parameters.iter();
+        for param in pit.as_slice() {
             procstr += format!("{} ", param).as_str();
         }
         procstr += format!("): {} {}\n", self.ret, '{').as_str();
-        
-        for stmt in &self.statements {
-            procstr += format!("{}\n", stmt).as_str();
-        }
-        procstr += "{\n";
+
+        procstr += format!("{}", self.body).as_str();
+        procstr += "}\n";
 
         write!(f, "{}", procstr)
     }
