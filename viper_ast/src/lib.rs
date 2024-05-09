@@ -178,14 +178,13 @@ impl std::fmt::Display for Expr {
             Self::WhileLoop(_loop_info) => {
                 todo!()
             }
-            Self::CodeBlock(_block_info) => {
-                todo!()
+            Self::CodeBlock(block) => {
+                write!(f, "{}", block)
             }
             Self::ProcedureCall(function) => {
                 write!(f, "{}", *function)
             }
             Self::ProcedureDefinition(def) => {
-                // TODO
                 write!(f, "{}", def)
             }
             Self::MethodCall(method) => {

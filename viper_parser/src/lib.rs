@@ -43,7 +43,9 @@ impl<'a> Parser<'a> {
                     // Program-level variable initialization
                     KeywordKind::Let => {
                         println!("Parsing let statement");
-                        return self.parse_variable_initialization();
+                        let expr = self.parse_variable_initialization();
+                        self.expect_punctuator(PunctuatorKind::SemiColon)?;
+                        return expr;
                     }
                     KeywordKind::Define => {
                         println!("Parsing function definition");
@@ -53,6 +55,25 @@ impl<'a> Parser<'a> {
                         return Err(ViperError::ParserError);
                     }
                 }
+            }
+            _ => {
+                return Err(ViperError::ParserError);
+            }
+        }
+    }
+
+    fn parse_type(&mut self) -> Result<Token, ViperError> {
+        let type_ast = self.current_token.clone();
+
+        match &type_ast {
+            Token::Keyword(_kind, _span) => {
+                self.advance()?;
+                return Ok(type_ast);
+            }
+
+            Token::Identifier(_name, _span) => {
+                self.advance()?;
+                return Ok(type_ast);
             }
             _ => {
                 return Err(ViperError::ParserError);
@@ -114,8 +135,6 @@ impl<'a> Parser<'a> {
 
         self.advance()?; // eat the '='
         let expr = self.parse_expr().unwrap();
-
-        self.advance()?; // eat the ';'
         
         return Ok(
             ExprNode::new(
@@ -130,28 +149,38 @@ impl<'a> Parser<'a> {
         );
     }
 
+    /// Parse expressions that are meant to stand alone 
     fn parse_expr_stmt(&mut self) -> Result<ExprNode, ViperError> {
         match &self.current_token {
-            Token::Keyword(kind, span) => {
+            Token::Keyword(kind, _span) => {
                 match kind {
                     // Variable initialization
                     KeywordKind::Let => {
-                        return self.parse_variable_initialization();
+                        let expr = self.parse_variable_initialization();
+                        self.expect_punctuator(PunctuatorKind::SemiColon)?;
+                        return expr;
                     }
                     KeywordKind::While => {
-                        return self.parse_while_loop();
+                        let expr = self.parse_while_loop();
+                        return expr;
                     }
                     KeywordKind::Yield => {
-                        return self.parse_yield();
+                        let expr = self.parse_yield();
+                        self.expect_punctuator(PunctuatorKind::SemiColon)?;
+                        return expr;
                     }
                     KeywordKind::Return => {
-                        return self.parse_return();
+                        let expr = self.parse_return();
+                        self.expect_punctuator(PunctuatorKind::SemiColon)?;
+                        return expr;
                     }
                     KeywordKind::Match => {
                         return self.parse_match();
                     }
                     KeywordKind::Defer => {
-                        return self.parse_defer();
+                        let expr = self.parse_defer();
+                        self.expect_punctuator(PunctuatorKind::SemiColon)?;
+                        return expr;
                     }
                     KeywordKind::Switch => {
                         return self.parse_switch();
@@ -226,6 +255,8 @@ impl<'a> Parser<'a> {
         }
         self.expect_punctuator(PunctuatorKind::RParen)?;
 
+        self.expect_punctuator(PunctuatorKind::Colon)?;
+
         // TODO: Actually parse return type
         let ret = self.current_token.clone();
         self.advance()?;
@@ -280,8 +311,10 @@ impl<'a> Parser<'a> {
             }
         };
         self.expect(&Token::Identifier("".into(), Span::dummy()))?;
+        self.expect_punctuator(PunctuatorKind::Colon)?;
 
-        let ty = &self.current_token;
+        let ty = &self.parse_type()?;
+        
    
         Ok(Binding::new(ident.into(), ty.clone()))
     }
