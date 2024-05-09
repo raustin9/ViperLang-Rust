@@ -1,10 +1,6 @@
 use std::{fmt::Display, sync::Arc};
 
-// use viper_core::_type::Type;
-
-use viper_core::token::Token;
-
-use crate::{Binding, ExprNode, Ident};
+use crate::{Binding, ExprNode, Ident, TypeAST};
 
 /// The variations of procedures that we can have in the Viper programming language
 #[derive(Clone, Debug, PartialEq)]
@@ -31,11 +27,12 @@ pub struct ProcedureDef {
     name: Ident,
     parameters: Arc<[Binding]>,
     body: Arc<ExprNode>,
-    ret: Token,
+    ret: TypeAST,
+    // ret: Token,
 }
 
 impl ProcedureDef {
-    pub fn new(name: Ident, parameters: Arc<[Binding]>, body: Arc<ExprNode>, ret: Token) -> ProcedureDef {
+    pub fn new(name: Ident, parameters: Arc<[Binding]>, body: Arc<ExprNode>, ret: TypeAST) -> ProcedureDef {
         ProcedureDef {
             name,
             parameters,

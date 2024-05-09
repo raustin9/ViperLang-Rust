@@ -2,7 +2,7 @@ pub mod test;
 
 use std::{mem::swap, sync::Arc};
 
-use viper_ast::{BinaryOperator, Binding, CodeBlock, Expr, ExprNode, ProcedureDef, ProcedureKind, UnaryOperator, VariableInitialization, WhileLoop};
+use viper_ast::{BinaryOperator, Binding, CodeBlock, Expr, ExprNode, ProcedureDef, ProcedureKind, TypeAST, UnaryOperator, VariableInitialization, WhileLoop};
 use viper_core::{error::ViperError, scope::Scope,  source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
@@ -62,18 +62,22 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_type(&mut self) -> Result<Token, ViperError> {
+    /// Parse a type AST node
+    fn parse_type(&mut self) -> Result<TypeAST, ViperError> {
         let type_ast = self.current_token.clone();
 
+        // TODO: parse the remainder of the types
         match &type_ast {
-            Token::Keyword(_kind, _span) => {
+            Token::Keyword(kind, _span) => {
                 self.advance()?;
-                return Ok(type_ast);
+                // TODO: Parse the arguments to the type
+                return Ok(TypeAST::Concrete { name: kind.as_str().to_string(), args: vec![] });
             }
 
-            Token::Identifier(_name, _span) => {
+            Token::Identifier(name, _span) => {
                 self.advance()?;
-                return Ok(type_ast);
+                // TODO: parse the arguments to the type
+                return Ok(TypeAST::Concrete { name: name.clone(), args: vec![] });
             }
             _ => {
                 return Err(ViperError::ParserError);
@@ -129,8 +133,9 @@ impl<'a> Parser<'a> {
         let ident_expr = self.parse_expr();
         self.advance()?; // eat the ':'
 
-        let dtype = self.current_token.clone();
-        self.advance()?;
+        let dtype = self.parse_type()?;
+//        let dtype = self.current_token.clone();
+//        self.advance()?;
 
 
         self.advance()?; // eat the '='
@@ -260,8 +265,9 @@ impl<'a> Parser<'a> {
         self.expect_punctuator(PunctuatorKind::Colon)?;
 
         // TODO: Actually parse return type
-        let ret = self.current_token.clone();
-        self.advance()?;
+        let ret = self.parse_type()?;
+//        let ret = self.current_token.clone();
+//        self.advance()?;
 
         // Parse the function body 
         let body = self.parse_expr_block(Some(self.source_file.scope()))?;
@@ -271,7 +277,7 @@ impl<'a> Parser<'a> {
                 ident.clone(), 
                 Arc::from(params.as_slice()), 
                 Arc::from(body), 
-                ret.clone()
+                ret.clone(),
             )
         ), Span::dummy()))
     }
