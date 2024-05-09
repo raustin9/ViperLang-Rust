@@ -33,6 +33,11 @@ impl CodeBlock {
     pub fn add_expr(&mut self, expr: ExprNode) {
         self.exprs.push(expr);
     }
+
+    /// Return a pointer to the scope of this [CodeBlock]
+    pub fn scope(&self) -> Arc<Scope> {
+        self.scope.clone()
+    }
 }
 
 impl Display for CodeBlock {

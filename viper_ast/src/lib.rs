@@ -4,6 +4,9 @@ use viper_core::{_type::Type, span::Span};
 pub mod scope;
 pub use scope::*;
 
+pub mod conditional;
+pub use conditional::*;
+
 pub mod codeblock;
 pub use codeblock::*;
 
@@ -135,6 +138,7 @@ pub enum Expr {
     ProcedureDefinition(ProcedureDef),
     Let(VariableInitialization),
     WhileLoop(WhileLoop),
+    If(Conditional),
     Identifier(String),
     ProcedureCall(Arc<ProcedureCall>),
     MethodCall(Arc<MethodCall>),
@@ -178,6 +182,9 @@ impl std::fmt::Display for Expr {
             }
             Self::Identifier(name) => {
                 write!(f, "{name}")
+            }
+            Self::If(conditional) => {
+                write!(f, "{conditional}")
             }
             Self::WhileLoop(_loop_info) => {
                 todo!()

@@ -2,7 +2,7 @@ pub mod test;
 
 use std::{mem::swap, sync::Arc};
 
-use viper_ast::{BinaryOperator, Binding, CodeBlock, Expr, ExprNode, ProcedureDef, ProcedureKind, TypeAST, UnaryOperator, VariableInitialization, WhileLoop};
+use viper_ast::{conditional, BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, ProcedureDef, ProcedureKind, TypeAST, UnaryOperator, VariableInitialization, WhileLoop};
 use viper_core::{error::ViperError, scope::Scope,  source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
@@ -155,7 +155,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parse expressions that are meant to stand alone 
-    fn parse_expr_stmt(&mut self) -> Result<ExprNode, ViperError> {
+    fn parse_expr_stmt(&mut self, scope: Arc<Scope>) -> Result<ExprNode, ViperError> {
         match &self.current_token {
             Token::Keyword(kind, _span) => {
                 match kind {
@@ -177,6 +177,10 @@ impl<'a> Parser<'a> {
                     KeywordKind::Return => {
                         let expr = self.parse_return();
                         self.expect_punctuator(PunctuatorKind::SemiColon)?;
+                        return expr;
+                    }
+                    KeywordKind::If => {
+                        let expr = self.parse_if(scope, KeywordKind::If);
                         return expr;
                     }
                     KeywordKind::Match => {
@@ -203,6 +207,58 @@ impl<'a> Parser<'a> {
                 return expr;
             }
         }
+    }
+
+    /// Parse an if statement in Viper
+    /// `
+    /// if <condition> {...}
+    ///
+    /// if <condition> {
+    /// } elif <condition> {
+    /// } else {
+    /// }
+    fn parse_if(&mut self, parent: Arc<Scope>, expected: KeywordKind) -> Result<ExprNode, ViperError> {
+        self.expect_keyword(expected)?;
+
+
+        // We only want to parse a condition if we are an `if` or `elif` expr.
+        // If we are an `else` expr, there is no condition to be evaluated
+        let condition = if KeywordKind::Else != expected {
+            Some(Arc::from(self.parse_expr()?))
+        } else {
+            None
+        };
+        
+        let body = self.parse_expr_block(Some(parent.clone()))?;
+
+        let else_clause = match self.current_token {
+            Token::Keyword(ref kind, _) => {
+                match kind {
+                    KeywordKind::Elif => {
+                        println!("ELIF");
+                        Some(Arc::from(self.parse_if(parent.clone(), KeywordKind::Elif)?))
+                    }
+                    KeywordKind::Else => {
+                        Some(Arc::from(self.parse_if(parent.clone(), KeywordKind::Else)?))
+                    }
+                    _ => {
+                        None
+                    }
+                }
+            }
+            _ => {
+                None
+            }
+        };
+
+        return Ok(ExprNode::new(
+            Expr::If(Conditional::new(
+                condition,
+                Arc::from(body),
+                else_clause,
+            )),
+            Span::dummy()
+        ));
     }
 
     /// Parse a conditional while loop for Viper
@@ -303,7 +359,7 @@ impl<'a> Parser<'a> {
       
         // Read the expressions within the block
         while self.current_token != PunctuatorKind::RSquirly {
-            block.add_expr(self.parse_expr_stmt().unwrap());
+            block.add_expr(self.parse_expr_stmt(block.scope()).unwrap());
         }
         self.expect_punctuator(PunctuatorKind::RSquirly)?;
 
