@@ -296,8 +296,14 @@ impl<'a> Parser<'a> {
         return Ok(ExprNode::new(Expr::Return(Arc::from(expr)) ,Span::dummy()));
     }
 
+    /// Parse a yield expression in Viper
+    /// `yield true`
+    /// `yield i + 1`
     fn parse_yield(&mut self) -> Result<ExprNode, ViperError> {
-        todo!();
+        self.expect_keyword(KeywordKind::Yield)?;
+        let expr = self.parse_expr()?;
+        
+        return Ok(ExprNode::new(Expr::Yield(Arc::from(expr)), Span::dummy()));
     }
 
     /// Parse a procedure definition

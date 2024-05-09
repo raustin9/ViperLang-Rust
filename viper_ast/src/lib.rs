@@ -135,6 +135,7 @@ pub enum Expr {
     Integer(u64),
     Float(f64),
     Return(Arc<ExprNode>),
+    Yield(Arc<ExprNode>),
     ProcedureDefinition(ProcedureDef),
     Let(VariableInitialization),
     WhileLoop(WhileLoop),
@@ -176,6 +177,9 @@ impl std::fmt::Display for Expr {
             }
             Self::Return(expr) => {
                 write!(f, "return {expr}")
+            }
+            Self::Yield(expr) => {
+                write!(f, "yield {expr}")
             }
             Self::Float(value) => {
                 write!(f, "{value}")
