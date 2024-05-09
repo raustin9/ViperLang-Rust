@@ -193,7 +193,9 @@ impl<'a> Parser<'a> {
             }
 
             _ => {
-                return self.parse_expr();
+                let expr = self.parse_expr();
+                self.expect_punctuator(PunctuatorKind::SemiColon)?;
+                return expr;
             }
         }
     }
@@ -292,7 +294,7 @@ impl<'a> Parser<'a> {
             block.add_expr(self.parse_expr_stmt().unwrap());
         }
         self.expect_punctuator(PunctuatorKind::RSquirly)?;
-       
+
         Ok(ExprNode::new(Expr::CodeBlock(block), Span::dummy()))
     }
 

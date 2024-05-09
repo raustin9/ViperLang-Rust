@@ -42,7 +42,7 @@ impl Display for CodeBlock {
         let mut str = String::new();
 
         for expr in &self.exprs {
-            str += format!("{}\n", expr).as_str();
+            str += format!("{};\n", expr).as_str();
         }
 
         write!(f, "{str}")
