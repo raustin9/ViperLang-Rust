@@ -131,6 +131,7 @@ pub enum Expr {
     False,
     Integer(u64),
     Float(f64),
+    Return(Arc<ExprNode>),
     ProcedureDefinition(ProcedureDef),
     Let(VariableInitialization),
     WhileLoop(WhileLoop),
@@ -168,6 +169,9 @@ impl std::fmt::Display for Expr {
             }
             Self::Integer(value) => {
                 write!(f, "{value}")
+            }
+            Self::Return(expr) => {
+                write!(f, "return {expr}")
             }
             Self::Float(value) => {
                 write!(f, "{value}")

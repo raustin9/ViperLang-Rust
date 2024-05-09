@@ -229,9 +229,15 @@ impl<'a> Parser<'a> {
     fn parse_switch(&mut self) -> Result<ExprNode, ViperError> {
         todo!();
     }
-    
+   
+    /// Parse a return expression in Viper
+    /// `return <expr>`
+    /// `return 0`
     fn parse_return(&mut self) -> Result<ExprNode, ViperError> {
-        todo!();
+        self.expect_keyword(KeywordKind::Return)?;
+
+        let expr = self.parse_expr()?;
+        return Ok(ExprNode::new(Expr::Return(Arc::from(expr)) ,Span::dummy()));
     }
 
     fn parse_yield(&mut self) -> Result<ExprNode, ViperError> {
