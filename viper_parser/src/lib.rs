@@ -66,6 +66,13 @@ impl<'a> Parser<'a> {
     fn parse_type(&mut self) -> Result<TypeAST, ViperError> {
         let type_ast = self.current_token.clone();
 
+        // Pointer
+        // *[type]
+        if &self.current_token == PunctuatorKind::Star {
+            self.expect_punctuator(PunctuatorKind::Star)?;
+            return Ok(TypeAST::Concrete { name: "Ref".to_string(), args: vec![self.parse_type()?] });
+        }
+
         // TODO: parse the remainder of the types
         match &type_ast {
             Token::Keyword(kind, _span) => {
