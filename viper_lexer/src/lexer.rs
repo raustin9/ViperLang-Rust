@@ -77,7 +77,7 @@ impl<'a> Lexer<'a> {
         let start_line = self.line_number.clone();
         let start_col = self.column.clone();
 
-        while char::is_alphanumeric(self.current_char) {
+        while char::is_alphanumeric(self.current_char) || self.current_char == '_' {
             self.read_char();
         }
 
