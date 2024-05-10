@@ -190,8 +190,8 @@ impl std::fmt::Display for Expr {
             Self::If(conditional) => {
                 write!(f, "{conditional}")
             }
-            Self::WhileLoop(_loop_info) => {
-                todo!()
+            Self::WhileLoop(whileloop) => {
+                write!(f, "{whileloop}")
             }
             Self::CodeBlock(block) => {
                 write!(f, "{}", block)

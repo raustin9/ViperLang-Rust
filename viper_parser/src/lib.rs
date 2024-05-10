@@ -166,7 +166,7 @@ impl<'a> Parser<'a> {
                         return expr;
                     }
                     KeywordKind::While => {
-                        let expr = self.parse_while_loop();
+                        let expr = self.parse_while_loop(scope);
                         return expr;
                     }
                     KeywordKind::Yield => {
@@ -264,14 +264,14 @@ impl<'a> Parser<'a> {
     /// Parse a conditional while loop for Viper
     /// `while [condition] {...}`
     /// `while 1 == 2-1 {...}`
-    fn parse_while_loop(&mut self) -> Result<ExprNode, ViperError> {
-        self.expect_keyword(KeywordKind::While);
+    fn parse_while_loop(&mut self, parent: Arc<Scope>) -> Result<ExprNode, ViperError> {
+        self.expect_keyword(KeywordKind::While)?;
 
-        let condition = self.parse_expr().unwrap();
+        let condition = Arc::from(self.parse_expr()?);
 
-        // let body = self.parse_expr_block().unwrap();
-        todo!();
-        // return Ok(ExprNode::new(Expr::WhileLoop(WhileLoop::new(condition, body)), Span::dummy()));
+        let body = Arc::from(self.parse_expr_block(Some(parent.clone()))?);
+
+        return Ok(ExprNode::new(Expr::WhileLoop(WhileLoop::new(condition, body)), Span::dummy()));
     }
 
     fn parse_match(&mut self) -> Result<ExprNode, ViperError> {
