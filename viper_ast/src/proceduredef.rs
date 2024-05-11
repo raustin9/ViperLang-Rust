@@ -48,7 +48,7 @@ impl Display for ProcedureDef {
 
         let pit = self.parameters.iter();
         for param in pit.as_slice() {
-            procstr += format!("{} ", param).as_str();
+            procstr += format!("{}, ", param).as_str();
         }
         procstr += format!("): {} {}\n", self.ret, '{').as_str();
 

@@ -66,6 +66,11 @@ impl<'a> Parser<'a> {
     fn parse_type(&mut self) -> Result<TypeAST, ViperError> {
         let type_ast = self.current_token.clone();
 
+        // Slice types
+        if &self.current_token == PunctuatorKind::LBrace {
+            return self.parse_type_slice();
+        }
+
         // Pointer
         // *[type]
         if &self.current_token == PunctuatorKind::Star {
@@ -90,6 +95,29 @@ impl<'a> Parser<'a> {
                 return Err(ViperError::ParserError);
             }
         }
+    }
+
+    /// Parse the slice type in the Viper programming language
+    fn parse_type_slice(&mut self) -> Result<TypeAST, ViperError> {
+        self.expect_punctuator(PunctuatorKind::LBrace)?;
+
+        let mut args = vec![];
+
+        while &self.current_token != PunctuatorKind::RBrace {
+            let ty = self.parse_type()?;
+            args.push(ty);
+
+            if &self.current_token != PunctuatorKind::Comma {
+                if &self.current_token == PunctuatorKind::RBrace {
+                    break;
+                } else {
+                    return Err(ViperError::ParserError);
+                }
+            }
+        }
+
+        self.expect_punctuator(PunctuatorKind::RBrace)?;
+        return Ok(TypeAST::Concrete { name: "Slice".to_string(), args });
     }
 
     /// Parse expressions at their tighest bindings
@@ -285,7 +313,7 @@ impl<'a> Parser<'a> {
         todo!();
     }
     
-    fn parse_switch(&mut self) -> Result<ExprNode, ViperError> {
+    fn _parse_switch(&mut self) -> Result<ExprNode, ViperError> {
         todo!();
     }
    
@@ -330,6 +358,16 @@ impl<'a> Parser<'a> {
         self.advance()?; // eat the '('
         while &self.current_token != PunctuatorKind::RParen {
             params.push(self.parse_binding().unwrap());
+
+            if &self.current_token != PunctuatorKind::Comma {
+                if &self.current_token == PunctuatorKind::RParen {
+                    break;
+                } else {
+                    return Err(ViperError::ParserError);
+                }
+            }
+
+            self.expect_punctuator(PunctuatorKind::Comma)?;
         }
         self.expect_punctuator(PunctuatorKind::RParen)?;
 
