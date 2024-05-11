@@ -28,7 +28,6 @@ pub struct ProcedureDef {
     parameters: Arc<[Binding]>,
     body: Arc<ExprNode>,
     ret: TypeAST,
-    // ret: Token,
 }
 
 impl ProcedureDef {

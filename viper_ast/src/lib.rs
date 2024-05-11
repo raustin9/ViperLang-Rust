@@ -43,6 +43,13 @@ pub use whileloop::*;
 pub mod proceduredef;
 pub use proceduredef::*;
 
+/// Whether something is private or public visible
+#[derive(Clone, Debug)]
+pub enum Visibility {
+    Public,
+    Private,
+}
+
 /// Represents a node in the Abstract Syntax tree for the Viper programming language
 #[derive(Debug, Clone)]
 pub struct Node<T> {

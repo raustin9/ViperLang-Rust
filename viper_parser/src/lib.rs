@@ -2,7 +2,7 @@ pub mod test;
 
 use std::sync::Arc;
 
-use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, ProcedureCall, ProcedureDef, ProcedureKind, StructDef, TypeAST, UnaryOperator, VariableInitialization, WhileLoop};
+use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, ProcedureCall, ProcedureDef, ProcedureKind, StructDef, StructMethod, TypeAST, UnaryOperator, VariableInitialization, Visibility, WhileLoop};
 use viper_core::{error::ViperError, scope::Scope,  source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
@@ -85,20 +85,40 @@ impl<'a> Parser<'a> {
             }
         };
 
-        let fields = self.parse_struct_fields()?;
-        
-        return Ok(ExprNode::new(
-            Expr::StructDef(StructDef::new(ident, fields)), 
-            Span::dummy()
-        ));
-    }
-
-    /// Parse the fields within a struct
-    fn parse_struct_fields(&mut self) -> Result<Arc<[Binding]>, ViperError> {
         let mut fields = vec![];
+        let mut methods = vec![];
+
         self.expect_punctuator(PunctuatorKind::LSquirly)?;
+
+        // Parse the fields and methods of the struct
         while &self.current_token != PunctuatorKind::RSquirly {
-            fields.push(self.parse_binding()?);
+            // TODO: parse visibility
+            let vis = Visibility::Public;
+
+            match &self.current_token {
+                // If we are seeing a keyword, we should be 
+                // parsing a method
+                Token::Keyword(kind, _) => {
+                    match kind {
+                        KeywordKind::Method 
+                        | KeywordKind::Static => {
+                            methods.push(self.parse_struct_method(vis)?);
+                            continue;
+                        }
+                        _ => return Err(ViperError::ParserError),
+                    }
+                }
+               
+                // If we are at an identifier, we should be
+                // parsing a field
+                Token::Identifier(_name, _span) => {
+                    fields.push(self.parse_binding()?);
+                }
+
+                _ => {
+                    return Err(ViperError::ParserError);
+                }
+            }
 
             if &self.current_token != PunctuatorKind::Comma {
                 if &self.current_token == PunctuatorKind::RSquirly {
@@ -113,7 +133,62 @@ impl<'a> Parser<'a> {
 
         self.expect_punctuator(PunctuatorKind::RSquirly)?;
 
-        return Ok(Arc::from(fields.as_slice()));
+
+        return Ok(ExprNode::new(
+            Expr::StructDef(StructDef::new(ident, Arc::from(fields.as_slice()), Arc::from(methods.as_slice()))), 
+            Span::dummy()
+        ));
+    }
+
+    /// Parse the methods within a struct in Viper
+    fn parse_struct_method(&mut self, vis: Visibility) -> Result<StructMethod, ViperError> {
+        let mut is_static = false;
+        if &self.current_token == KeywordKind::Static {
+            is_static = true;
+            self.expect_keyword(KeywordKind::Static)?;
+        } else {
+            self.expect_keyword(KeywordKind::Method)?;
+        }
+
+        let mut params: Vec<Binding> = vec![];
+
+        let ident = match &self.current_token {
+            Token::Identifier(name, _span) => {
+                name.clone()
+            }
+            _ => return Err(ViperError::ParserError),
+        };
+
+        self.advance()?; // eat the identifier
+
+        self.expect_punctuator(PunctuatorKind::LParen)?;
+        while &self.current_token != PunctuatorKind::RParen {
+            params.push(self.parse_binding().unwrap());
+
+            if &self.current_token != PunctuatorKind::Comma {
+                if &self.current_token == PunctuatorKind::RParen {
+                    break;
+                } else {
+                    return Err(ViperError::ParserError);
+                }
+            }
+
+            self.expect_punctuator(PunctuatorKind::Comma)?;
+        }
+        self.expect_punctuator(PunctuatorKind::RParen)?;
+        self.expect_punctuator(PunctuatorKind::Colon)?;
+
+        let ret = self.parse_type()?;
+        let body = self.parse_expr_block(Some(self.source_file.scope()))?;
+
+        return Ok(StructMethod::new(
+            ident, 
+            Arc::from(params.as_slice()), 
+            Arc::from(body), 
+            ret, 
+            vis, 
+            is_static
+        ));
     }
 
     /// Parse a type AST node
@@ -427,7 +502,6 @@ impl<'a> Parser<'a> {
 
         self.expect_punctuator(PunctuatorKind::Colon)?;
 
-        // TODO: Actually parse return type
         let ret = self.parse_type()?;
 //        let ret = self.current_token.clone();
 //        self.advance()?;

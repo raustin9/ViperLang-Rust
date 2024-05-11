@@ -222,6 +222,11 @@ pub enum KeywordKind {
     Public,
     Import,
     Export,
+    Method,
+    Static,
+
+    /// For referencing the 'self' pointer in
+    KWSelf,
    
     /// Control flow keywords
     For,
@@ -257,6 +262,9 @@ impl KeywordKind {
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Define => return "define",
+            Self::KWSelf => return "self",
+            Self::Static => return "static",
+            Self::Method => return "method",
             Self::Defer => return "defer",
             Self::Yield => return "yield",
             Self::Let => return "let",
@@ -371,6 +379,7 @@ pub enum PunctuatorKind {
     DoubleColon,
     SemiColon,
     FatArrow,
+    ThinArrow,
 }
 
 impl PunctuatorKind {
@@ -419,6 +428,7 @@ impl PunctuatorKind {
             Self::DoubleColon => return "::",
             Self::SemiColon => return ";",
             Self::FatArrow => return "=>",
+            Self::ThinArrow => return "->",
         }
     }
 }
