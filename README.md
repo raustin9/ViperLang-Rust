@@ -13,16 +13,13 @@ define main(argc: i32, argv[[u8]]): i32 {
 ```
 
 Structured Data Types:
-```rust
+```Java
 /// Data type that represents a "User"
 /// These fields are private by default and can only be accessed by 
 /// methods defined for the User type
 struct User {
     name: std::string,
     age: u32,
-}
-
-impl User {
     /// Static method defined for the TYPE User to generate and return a new user from the defined values
     public define new(name: std::string, age: u43): User {
         return User {
@@ -30,15 +27,15 @@ impl User {
             age: age,
         };
     }
-    
-    /// Public method defined for the 
+
+    /// Public method defined for the User
     public define print(&self): void {
         std::io::print("Name: ${self.name}. Age: ${self.age}");
         return 0;
     }
 
     /// Accessor for the private 'User.name' field 
-    public name(&self): std::string {
+    public name(): std::string {
         return self.name;
     }
 }
