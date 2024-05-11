@@ -4,6 +4,9 @@ use viper_core::{_type::Type, span::Span};
 pub mod scope;
 pub use scope::*;
 
+pub mod structdef;
+pub use structdef::*;
+
 pub mod conditional;
 pub use conditional::*;
 
@@ -147,6 +150,7 @@ pub enum Expr {
     BinaryOperation(BinaryOperator, Arc<ExprNode>, Arc<ExprNode>),
     UnaryOperation(UnaryOperator, Arc<ExprNode>),
     CodeBlock(CodeBlock),
+    StructDef(StructDef),
 } 
 
 /// Represents a literal type in Viper
@@ -216,6 +220,9 @@ impl std::fmt::Display for Expr {
             }
             Self::UnaryOperation(op, expr) => {
                 write!(f, "{}{}", op, expr.inner)
+            }
+            Self::StructDef(structdef) => {
+                write!(f, "{structdef}")
             }
         }
     }

@@ -2,7 +2,7 @@ pub mod test;
 
 use std::sync::Arc;
 
-use viper_ast::{ProcedureCall, BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, ProcedureDef, ProcedureKind, TypeAST, UnaryOperator, VariableInitialization, WhileLoop};
+use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, ProcedureCall, ProcedureDef, ProcedureKind, StructDef, TypeAST, UnaryOperator, VariableInitialization, WhileLoop};
 use viper_core::{error::ViperError, scope::Scope,  source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
@@ -51,6 +51,11 @@ impl<'a> Parser<'a> {
                         println!("Parsing function definition");
                         return self.parse_procedure_definition();
                     }
+
+                    KeywordKind::Struct => {
+                        println!("Parsing struct definition");
+                        return self.parse_struct_def();
+                    }
                     _ => {
                         return Err(ViperError::ParserError);
                     }
@@ -60,6 +65,55 @@ impl<'a> Parser<'a> {
                 return Err(ViperError::ParserError);
             }
         }
+    }
+
+    /// Parse a struct definition for the Viper programming language
+    /// struct User {
+    ///     name: string,
+    ///     age: i32
+    /// }
+    fn parse_struct_def(&mut self) -> Result<ExprNode, ViperError> {
+        self.expect_keyword(KeywordKind::Struct)?;
+
+        let ident = match self.current_token.clone() {
+            Token::Identifier(name, _span) => {
+                self.advance()?;
+                name
+            }
+            _ => {
+                return Err(ViperError::ParserError);
+            }
+        };
+
+        let fields = self.parse_struct_fields()?;
+        
+        return Ok(ExprNode::new(
+            Expr::StructDef(StructDef::new(ident, fields)), 
+            Span::dummy()
+        ));
+    }
+
+    /// Parse the fields within a struct
+    fn parse_struct_fields(&mut self) -> Result<Arc<[Binding]>, ViperError> {
+        let mut fields = vec![];
+        self.expect_punctuator(PunctuatorKind::LSquirly)?;
+        while &self.current_token != PunctuatorKind::RSquirly {
+            fields.push(self.parse_binding()?);
+
+            if &self.current_token != PunctuatorKind::Comma {
+                if &self.current_token == PunctuatorKind::RSquirly {
+                    break;
+                }
+
+                return Err(ViperError::ParserError);
+            }
+
+            self.expect_punctuator(PunctuatorKind::Comma)?;
+        }
+
+        self.expect_punctuator(PunctuatorKind::RSquirly)?;
+
+        return Ok(Arc::from(fields.as_slice()));
     }
 
     /// Parse a type AST node

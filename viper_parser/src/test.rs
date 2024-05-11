@@ -39,6 +39,24 @@ define main (argc: i32): i32 {
     }
     
     #[test]
+    fn parser_struct() {
+        let test_file = SourceFile::new_dummy(
+r#"
+struct User {
+    a:i32,
+    b:i32,
+}
+"#, 
+            "Test file"
+        );
+        let file_ptr = Arc::from(test_file);
+
+        let mut parser = Parser::new(&file_ptr);
+
+        parser.parse_top_level().unwrap();
+    }
+    
+    #[test]
     fn parser_yield() {
         let test_file = SourceFile::new_dummy(
 r#"
