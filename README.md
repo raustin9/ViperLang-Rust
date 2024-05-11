@@ -5,7 +5,7 @@ Viper is meant to be a nice middle ground between the type system and syntax of 
 Dissimilar from Rust, the purpose of Viper is not memory safety, as the goal is to essentially be C with Rust-like syntax. 
 
 Example hello world:
-```
+```rust
 define main(argc: i32, argv[[u8]]): i32 {
     std::io::print("Hello, World\n");
     return 0;
@@ -13,7 +13,7 @@ define main(argc: i32, argv[[u8]]): i32 {
 ```
 
 Structured Data Types:
-```
+```rust
 /// Data type that represents a "User"
 /// These fields are private by default and can only be accessed by 
 /// methods defined for the User type
@@ -54,7 +54,7 @@ define main(argc: i32, argv[[u8]]): i32 {
 ```
 
 Rust-like Sum Types
-```
+```rust
 enum Weapon {
     LaserGun {
         ammo: u32,
@@ -77,7 +77,7 @@ define main(void) {
 ```
 
 Loops
-```
+```rust
 // Standard for loop
 for (let i: i32 = 0; i < 10; i += 1) {
     std::io::print("i: ${i}");
@@ -90,7 +90,7 @@ while token.kind != TokenKind::EOF {
 ```
 
 Functions
-```
+```rust
 // Functions are defined using the 'define' keyword
 define test(parameter1: u32, parameter2: std::string): return_type {
     // Like most other languages, you return a value from a function using the 'return' keyword
@@ -99,7 +99,7 @@ define test(parameter1: u32, parameter2: std::string): return_type {
 ```
 
 Expressions and the 'yield' keyword:
-```
+```rust
 // Like Rust, most pieces of code are expressions
 // This means that they can be evaluated and used within other expressions
 let i: i32 = if User.name == "Alex" {
