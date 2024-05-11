@@ -9,26 +9,39 @@ pub struct StructDef {
     identifier: Ident,
 
     /// The fields contained in the struct
-    fields: Arc<[Binding]>,
+    fields: Arc<[StructField]>,
 
     /// The class methods
     methods: Arc<[StructMethod]>,
+
+    visibility: Visibility,
 }
 
 impl StructDef {
     /// Create a new [StructDef] object
-    pub fn new(identifier: Ident, fields: Arc<[Binding]>, methods: Arc<[StructMethod]>) -> StructDef {
+    pub fn new(
+        identifier: Ident, 
+        fields: Arc<[StructField]>, 
+        methods: Arc<[StructMethod]>,
+        visibility: Visibility,
+    ) -> StructDef {
         StructDef {
             identifier,
             fields,
             methods,
+            visibility,
         }
     }
 }
 
 impl Display for StructDef {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut str = String::from(format!("struct {} {}", self.identifier, '{'));
+        let mut str = String::new();
+        str += match &self.visibility {
+            Visibility::Public => "public ",
+            Visibility::Private => "private ",
+        };
+        str += format!("struct {} {}", self.identifier, '{').as_str();
         
         for field in self.fields.iter() {
             str += format!("\n    {},", field).as_str();
@@ -40,6 +53,34 @@ impl Display for StructDef {
 
 
         write!(f, "{str}")
+    }
+}
+
+/// Represents a member field for a structure in Viper
+#[derive(Clone, Debug)]
+pub struct StructField {
+    binding: Binding,
+    visibility: Visibility,
+}
+
+impl StructField {
+    /// Create a new [StructField] object
+    pub fn new(binding: Binding, visibility: Visibility) -> StructField {
+        StructField {
+            binding,
+            visibility,
+        }
+    }
+}
+
+impl Display for StructField {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let vis_str = match &self.visibility {
+            Visibility::Public => "public",
+            Visibility::Private => "private",
+        };
+
+        write!(f, "{vis_str} {}", self.binding)
     }
 }
 

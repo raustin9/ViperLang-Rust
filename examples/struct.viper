@@ -1,5 +1,5 @@
 struct User {
-    a: i32,
+    public a: i32,
     b: u32,
 
     method

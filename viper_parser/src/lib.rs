@@ -2,7 +2,7 @@ pub mod test;
 
 use std::sync::Arc;
 
-use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, ProcedureCall, ProcedureDef, ProcedureKind, StructDef, StructMethod, TypeAST, UnaryOperator, VariableInitialization, Visibility, WhileLoop};
+use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, ProcedureCall, ProcedureDef, ProcedureKind, StructDef, StructField, StructMethod, TypeAST, UnaryOperator, VariableInitialization, Visibility, WhileLoop};
 use viper_core::{error::ViperError, scope::Scope,  source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
@@ -73,6 +73,12 @@ impl<'a> Parser<'a> {
     ///     age: i32
     /// }
     fn parse_struct_def(&mut self) -> Result<ExprNode, ViperError> {
+        let mut struct_vis = Visibility::Private;
+        if &self.current_token == KeywordKind::Public {
+            struct_vis = Visibility::Public;
+            self.expect_keyword(KeywordKind::Public)?;
+        }
+
         self.expect_keyword(KeywordKind::Struct)?;
 
         let ident = match self.current_token.clone() {
@@ -93,7 +99,11 @@ impl<'a> Parser<'a> {
         // Parse the fields and methods of the struct
         while &self.current_token != PunctuatorKind::RSquirly {
             // TODO: parse visibility
-            let vis = Visibility::Public;
+            let mut vis = Visibility::Private;
+            if &self.current_token == KeywordKind::Public {
+                vis = Visibility::Public;
+                self.expect_keyword(KeywordKind::Public)?;
+            }
 
             match &self.current_token {
                 // If we are seeing a keyword, we should be 
@@ -112,7 +122,11 @@ impl<'a> Parser<'a> {
                 // If we are at an identifier, we should be
                 // parsing a field
                 Token::Identifier(_name, _span) => {
-                    fields.push(self.parse_binding()?);
+                    let binding = self.parse_binding()?;
+                    
+                    fields.push(
+                        StructField::new(binding, vis)
+                    );
                 }
 
                 _ => {
@@ -135,7 +149,12 @@ impl<'a> Parser<'a> {
 
 
         return Ok(ExprNode::new(
-            Expr::StructDef(StructDef::new(ident, Arc::from(fields.as_slice()), Arc::from(methods.as_slice()))), 
+            Expr::StructDef(StructDef::new(
+                    ident, 
+                    Arc::from(fields.as_slice()), 
+                    Arc::from(methods.as_slice()),
+                    struct_vis,
+                )), 
             Span::dummy()
         ));
     }
