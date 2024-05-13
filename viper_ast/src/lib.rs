@@ -1,6 +1,9 @@
 use std::{fmt::Display, sync::Arc};
 use viper_core::{_type::Type, span::Span};
 
+pub mod objinit;
+pub use objinit::*;
+
 pub mod scope;
 pub use scope::*;
 
@@ -78,72 +81,13 @@ impl <T> Node<T> {
 /// eg: 5 evaluates to 5, "test" evaluates to "test"
 pub type Ident = String;
 
-//#[derive(Clone, Debug)]
-//pub enum Expr {
-//    Literal {
-//        literal: Literal,
-//        ty: Type,
-//        span: Span,
-//    },
-//    Closure {
-//        proc: ProcedureCall,
-//        kind: ProcedureKind,
-//        ty: Type,
-//        span: Span,
-//    },
-//    Block {
-//        statements: Vec<Expr>,
-//        ty: Type,
-//        span: Span,
-//    },
-//    Let {
-//        binding: Binding,
-//        ident: Vec<Expr>,
-//        value: Arc<Expr>,
-//        types: Vec<Type>,
-//        span: Span,
-//    },
-//    Variable {
-//        value: Ident,
-//        decl: Span,
-//        // TODO: generics
-//        ty: Type,
-//        span: Span,
-//    },
-//    ProcedureCall {
-//        proc: Arc<Expr>,
-//        args: Vec<Expr>,
-//        ty: Type,
-//        span: Span,
-//    },
-//    If {
-//        cond: Arc<Expr>,
-//        then: Arc<Expr>,
-//        ty: Type,
-//        span: Span,
-//    },
-//    Match {
-//        subject: Arc<Expr>,
-//        arms: TypeAST,
-//        ty: Type,
-//        span: Span,
-//    },
-//    Tuple {
-//        elements: Vec<Expr>,
-//        ty: Type,
-//        span: Span,
-//    },
-//    EnumDefinition {
-//        // TODO: Enums
-//    },
-//}
-
 #[derive(Clone, Debug)]
 pub enum Expr {
     True,
     False,
     Integer(u64),
     Float(f64),
+    StringLiteral(String),
     Return(Arc<ExprNode>),
     Yield(Arc<ExprNode>),
     ProcedureDefinition(ProcedureDef),
@@ -158,19 +102,8 @@ pub enum Expr {
     UnaryOperation(UnaryOperator, Arc<ExprNode>),
     CodeBlock(CodeBlock),
     StructDef(StructDef),
+    ObjInitialization(ObjInit),
 } 
-
-/// Represents a literal type in Viper
-/// 1, true, false, "string literal", 'c', [1, 3, 5]
-#[derive(Clone, Debug, PartialEq)]
-pub enum Literal {
-    Integer(u64),
-    Float(f64),
-    Bool(bool),
-    String(StrType),
-    Char(char),
-    Slice, // TODO
-}
 
 pub type StrType = String;
 
@@ -185,6 +118,9 @@ impl std::fmt::Display for Expr {
             }
             Self::Integer(value) => {
                 write!(f, "{value}")
+            }
+            Self::StringLiteral(literal) => {
+                write!(f, "{literal}")
             }
             Self::Return(expr) => {
                 write!(f, "return {expr}")
@@ -230,6 +166,9 @@ impl std::fmt::Display for Expr {
             }
             Self::StructDef(structdef) => {
                 write!(f, "{structdef}")
+            }
+            Self::ObjInitialization(init) => {
+                write!(f, "{init}")
             }
         }
     }

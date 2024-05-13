@@ -2,7 +2,7 @@ pub mod test;
 
 use std::sync::Arc;
 
-use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, ProcedureCall, ProcedureDef, ProcedureKind, StructDef, StructField, StructMethod, TypeAST, UnaryOperator, VariableInitialization, Visibility, WhileLoop};
+use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, FieldInit, ObjInit, ProcedureCall, ProcedureDef, ProcedureKind, StructDef, StructField, StructMethod, TypeAST, UnaryOperator, VariableInitialization, Visibility, WhileLoop};
 use viper_core::{error::ViperError, scope::Scope,  source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
@@ -291,10 +291,29 @@ impl<'a> Parser<'a> {
             Token::NumericLiteral(value, _span) => {
                 self.parse_number_literal(value)
             }
+
+            Token::StringLiteral(_literal, _span) => {
+                self.parse_string_literal()
+            }
             
             _ => {
                 Err(ViperError::ParserError)
             }
+        }
+    }
+
+    /// Parse a string liteal in Viper
+    /// "string literal"
+    fn parse_string_literal(&mut self) -> Result<ExprNode, ViperError> {
+        match self.current_token.clone() {
+            Token::StringLiteral(literal, span) => {
+                self.advance()?;
+                Ok(ExprNode::new(
+                    Expr::StringLiteral(literal), span)
+                )
+            }
+
+            _ => return Err(ViperError::ParserError),
         }
     }
     
@@ -627,50 +646,112 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expr_identifier(&mut self) -> Result<ExprNode, ViperError> {
+        // Make sure that we are at an Identifier token
         match self.current_token.clone() {
-            // Parse an identifier expression
+            // We are... Parse an identifier expression
             Token::Identifier(ident, span) => {
                 self.advance()?;
                 let mut args: Vec<Arc<ExprNode>> = Vec::new();
 
+                // Switch on the types of tokens to see what type of 
+                // expression we should be parsing
+                match &self.current_token {
+                    Token::Punctuator(kind, _prec, _span) => {
+                        match kind {
+                            // "identifier(..." is a function call
+                            PunctuatorKind::LParen => {
+                                self.expect_punctuator(PunctuatorKind::LParen)?;
+
+                                // Parse the arguments
+                                while &self.current_token != PunctuatorKind::RParen {
+                                    match self.parse_expr() {
+                                        Ok(expr) => {
+                                            args.push(Arc::from(expr));
+                                        }
+                                        Err (_err) =>{
+                                            // If this errors assume that we did not parse an expression,
+                                            // and that it is empty. 
+                                            // This is not good and in the future we are going to have
+                                            // a noop expression that will represent this
+                                            continue;
+                                        }
+                                    }
+
+                                    if &self.current_token != PunctuatorKind::Comma {
+                                        if &self.current_token == PunctuatorKind::RParen {
+                                            break;
+                                        } else {
+                                            // No comma, but no ')' is error
+                                            return Err(ViperError::ParserError);
+                                        }
+                                    }
+
+                                    self.expect_punctuator(PunctuatorKind::Comma)?;
+                                }
+
+                                self.expect_punctuator(PunctuatorKind::RParen)?;
+
+                                // Return function call expression
+                                return Ok(ExprNode::new(
+                                        Expr::ProcedureCall(Arc::from(ProcedureCall::new(ident, args))), 
+                                        span
+                                ));
+                            }
+
+                            // "identifier {..." is an object initialization
+                            PunctuatorKind::LSquirly => {
+                                self.expect_punctuator(PunctuatorKind::LSquirly)?;
+                                let mut field_inits = vec![];
+                                
+                                while &self.current_token != PunctuatorKind::RSquirly {
+                                    let field_name = match &self.current_token {
+                                        Token::Identifier(name, _span) => {
+                                            name.clone()
+                                        }
+                                        _ => return Err(ViperError::ParserError),
+                                    };
+
+                                    self.advance()?; // eat the identifier
+                                    self.expect_punctuator(PunctuatorKind::Colon)?;
+                                    
+                                    let field_expr = self.parse_expr()?;
+                                    
+                                    field_inits.push(
+                                        FieldInit::new(field_name, Arc::from(field_expr))
+                                    );
+
+
+
+                                    if &self.current_token != PunctuatorKind::Comma {
+                                        if &self.current_token == PunctuatorKind::RSquirly {
+                                            break;
+                                        } else {
+                                            // No comma, but no ')' is error
+                                            return Err(ViperError::ParserError);
+                                        }
+                                    }
+
+                                    self.expect_punctuator(PunctuatorKind::Comma)?;
+                                }
+
+                                self.expect_punctuator(PunctuatorKind::RSquirly)?;
+
+                                return Ok(ExprNode::new(
+                                    Expr::ObjInitialization(ObjInit::new(ident, field_inits))
+                                    , span
+                                ));
+                            }
+                            _ => {
+                            }
+                        }
+                    }
+                    _ => {
+        
+                    }
+                }
+
                 // See if we are at a function call
                 if &self.current_token == PunctuatorKind::LParen {
-                    self.expect_punctuator(PunctuatorKind::LParen)?;
-
-                    // Parse the arguments
-                    while &self.current_token != PunctuatorKind::RParen {
-                        match self.parse_expr() {
-                            Ok(expr) => {
-                                args.push(Arc::from(expr));
-                            }
-                            Err (_err) =>{
-                                // If this errors assume that we did not parse an expression,
-                                // and that it is empty. 
-                                // This is not good and in the future we are going to have
-                                // a noop expression that will represent this
-                                continue;
-                            }
-                        }
-                        
-                        if &self.current_token != PunctuatorKind::Comma {
-                            if &self.current_token == PunctuatorKind::RParen {
-                                break;
-                            } else {
-                                // No comma, but no ')' is error
-                                return Err(ViperError::ParserError);
-                            }
-                        }
-
-                        self.expect_punctuator(PunctuatorKind::Comma)?;
-                    }
-
-                    self.expect_punctuator(PunctuatorKind::RParen)?;
-
-                    // Return function call expression
-                    return Ok(ExprNode::new(
-                        Expr::ProcedureCall(Arc::from(ProcedureCall::new(ident, args))), 
-                        span
-                    ));
                 }
                
                 // Return normal identifier expr

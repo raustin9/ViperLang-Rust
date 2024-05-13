@@ -55,7 +55,7 @@ define main(argc: i32, argv[[u8]]): i32 {
 ```
 
 Rust-like Sum Types
-```rust
+```ts
 enum Weapon {
     LaserGun {
         ammo: u32,
@@ -78,7 +78,7 @@ define main(void) {
 ```
 
 Loops
-```rust
+```ts
 // Standard for loop
 for (let i: i32 = 0; i < 10; i += 1) {
     std::io::print("i: ${i}");
