@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
-use viper_core::token::Token;
+use viper_core::_type::Type;
 
-use crate::{Ident, TypeAST};
+use crate::Ident;
 
 /// Represents binding an identifier to a type
 /// let i: i32 = ...
@@ -10,8 +10,7 @@ use crate::{Ident, TypeAST};
 #[derive(Clone, Debug, PartialEq)]
 pub struct Binding {
     ident: Ident,
-    ty: TypeAST,
-    // ty: Token,
+    ty: Type,
 }
 
 impl Display for Binding {
@@ -21,7 +20,7 @@ impl Display for Binding {
 }
 
 impl Binding {
-    pub fn new(ident: String, ty: TypeAST) -> Binding {
+    pub fn new(ident: String, ty: Type) -> Binding {
         Binding {
             ident,
             ty

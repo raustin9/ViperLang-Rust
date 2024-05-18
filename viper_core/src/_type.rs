@@ -1,43 +1,37 @@
 use std::{fmt::Display, sync::Arc};
 
-use crate::symbol::Symbol;
 
+/// Represents a type within the Abstract Syntax Tree
+/// let i: i32 = ...
+/// i32 is a node
 #[derive(Clone, Debug, PartialEq)]
 pub enum Type {
-    Con {
-        id: Symbol,
-        args: Vec<Type>,
-    },
-    Proc {
-        args: Vec<Type>,
-        bound: Vec<Bound>,
-        ret: Arc<Type>,
-    },
-}
+    Concrete {
+        name: String,
 
-/// thanks https://github.com/borgo-lang/borgo/blob/main/compiler/src/type_.rs#L27
-#[derive(Clone, Debug, PartialEq)]
-pub struct Bound {
-    pub generic: Type,
-    pub ty: Type,
+        /// Arguments to the type. 
+        /// i32, [] etc
+        args: Vec<Self>,
+    },
+    Procedure {
+    }
 }
 
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Con { id, args } => {
-                write!(f, "[{id}]")
-            }
-            Self::Proc { args, bound, ret } => {
-                let mut typestr = String::from("[fn ");
+            Self::Concrete { name, args } => {
+                let mut str = String::from(format!("{name}"));
                 for arg in args {
-                    typestr += format!("{arg} ").as_str()
+                    str += format!("{arg}").as_str();
                 }
 
-                typestr += format!("{ret}").as_str();
-
-                write!(f, "")
+                write!(f, "{str}")
+            }
+            _ => {
+                write!(f, "FUNCTION TYPEAST TODO")
             }
         }
     }
 }
+

@@ -4,9 +4,6 @@ use viper_core::{_type::Type, span::Span};
 pub mod objinit;
 pub use objinit::*;
 
-pub mod scope;
-pub use scope::*;
-
 pub mod structdef;
 pub use structdef::*;
 
@@ -37,8 +34,8 @@ pub use binding::*;
 pub mod variable_init;
 pub use variable_init::*;
 
-pub mod typeast;
-pub use typeast::*;
+//pub mod typeast;
+//pub use typeast::*;
 
 pub mod whileloop;
 pub use whileloop::*;
@@ -67,6 +64,11 @@ impl <T> Node<T> {
             inner,
             span
         }
+    }
+
+    /// Accessor to the inner component of the Node
+    pub fn inner(&self) -> &T {
+        &self.inner
     }
 }
 

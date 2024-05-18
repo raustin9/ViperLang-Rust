@@ -22,4 +22,9 @@ impl Scope {
             parent
         }
     }
+
+    /// Insert a symbol into the Scope at the given key
+    pub fn add_symbol(&mut self, key: String, symbol: Symbol) {
+        self.symbol_map.insert(key, symbol);
+    }
 }

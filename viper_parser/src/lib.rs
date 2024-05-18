@@ -2,8 +2,8 @@ pub mod test;
 
 use std::sync::Arc;
 
-use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, FieldInit, ObjInit, ProcedureCall, ProcedureDef, ProcedureKind, StructDef, StructField, StructMethod, TypeAST, UnaryOperator, VariableInitialization, Visibility, WhileLoop};
-use viper_core::{error::ViperError, scope::Scope,  source::SourceFile, span::Span, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
+use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, FieldInit, ObjInit, ProcedureCall, ProcedureDef, ProcedureKind, StructDef, StructField, StructMethod, UnaryOperator, VariableInitialization, Visibility, WhileLoop};
+use viper_core::{error::ViperError, scope::Scope,  source::SourceFile, span::Span, _type::Type, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
 
@@ -211,7 +211,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parse a type AST node
-    fn parse_type(&mut self) -> Result<TypeAST, ViperError> {
+    fn parse_type(&mut self) -> Result<Type, ViperError> {
         let type_ast = self.current_token.clone();
 
         // Slice types
@@ -223,7 +223,7 @@ impl<'a> Parser<'a> {
         // *[type]
         if &self.current_token == PunctuatorKind::Star {
             self.expect_punctuator(PunctuatorKind::Star)?;
-            return Ok(TypeAST::Concrete { name: "Ref".to_string(), args: vec![self.parse_type()?] });
+            return Ok(Type::Concrete { name: "Ref".to_string(), args: vec![self.parse_type()?] });
         }
 
         // TODO: parse the remainder of the types
@@ -231,13 +231,13 @@ impl<'a> Parser<'a> {
             Token::Keyword(kind, _span) => {
                 self.advance()?;
                 // TODO: Parse the arguments to the type
-                return Ok(TypeAST::Concrete { name: kind.as_str().to_string(), args: vec![] });
+                return Ok(Type::Concrete { name: kind.as_str().to_string(), args: vec![] });
             }
 
             Token::Identifier(name, _span) => {
                 self.advance()?;
                 // TODO: parse the arguments to the type
-                return Ok(TypeAST::Concrete { name: name.clone(), args: vec![] });
+                return Ok(Type::Concrete { name: name.clone(), args: vec![] });
             }
             _ => {
                 return Err(ViperError::ParserError);
@@ -246,7 +246,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parse the slice type in the Viper programming language
-    fn parse_type_slice(&mut self) -> Result<TypeAST, ViperError> {
+    fn parse_type_slice(&mut self) -> Result<Type, ViperError> {
         self.expect_punctuator(PunctuatorKind::LBrace)?;
 
         let mut args = vec![];
@@ -265,7 +265,7 @@ impl<'a> Parser<'a> {
         }
 
         self.expect_punctuator(PunctuatorKind::RBrace)?;
-        return Ok(TypeAST::Concrete { name: "Slice".to_string(), args });
+        return Ok(Type::Concrete { name: "Slice".to_string(), args });
     }
 
     /// Parse expressions at their tighest bindings

@@ -1,20 +1,22 @@
 use std::{fmt::Display, sync::Arc};
 
-use crate::{source::SourceModule, span::Span};
+use crate::{_type::Type, source::SourceModule, span::Span};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Symbol {
     module: Arc<SourceModule>,
     name: String,
+    dtype: Arc<Type>,
     span: Span,
 }
 
 impl Symbol {
     /// Create a new symbol
-    pub fn new(module: Arc<SourceModule>, name: String, span: Span) -> Symbol {
+    pub fn new(module: Arc<SourceModule>, dtype: Arc<Type>, name: String, span: Span) -> Symbol {
         Symbol {
             module,
             name,
+            dtype,
             span,
         }
     }

@@ -1,7 +1,7 @@
 use std::{fmt::Display, sync::Arc};
 use viper_core::scope::Scope;
 
-use crate::{ExprNode};
+use crate::{Expr, ExprNode};
 
 /// Represents a block of code in the Viper programming language
 /// `
@@ -31,6 +31,13 @@ impl CodeBlock {
 
     /// Add a parsed expression to the 
     pub fn add_expr(&mut self, expr: ExprNode) {
+        match expr.inner() {
+            Expr::Let(init) => {
+                // TODO: add symbol here
+            }
+            _ => {
+            }
+        }
         self.exprs.push(expr);
     }
 

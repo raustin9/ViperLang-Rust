@@ -1,6 +1,8 @@
 use std::{fmt::Display, sync::Arc};
 
-use crate::{Binding, ExprNode, Ident, TypeAST, Visibility};
+use viper_core::_type::Type;
+
+use crate::{Binding, ExprNode, Ident, Visibility};
 
 /// Represents a struct definition in Viper
 #[derive(Clone, Debug)]
@@ -90,7 +92,7 @@ pub struct StructMethod {
     name: Ident,
     parameters: Arc<[Binding]>,
     body: Arc<ExprNode>,
-    ret: TypeAST,
+    ret: Type,
     visibility: Visibility,
     is_static: bool,
 }
@@ -101,7 +103,7 @@ impl StructMethod {
         name: Ident, 
         parameters: Arc<[Binding]>, 
         body: Arc<ExprNode>,
-        ret: TypeAST,
+        ret: Type,
         visibility: Visibility,
         is_static: bool,
     ) -> StructMethod {

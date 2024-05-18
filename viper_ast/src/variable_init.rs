@@ -1,6 +1,8 @@
 use std::{fmt::Display, sync::Arc};
 
-use crate::{ExprNode, TypeAST};
+use viper_core::_type::Type;
+
+use crate::ExprNode;
 
 /// ## AST Node structure for initializing a variable
 ///
@@ -15,7 +17,7 @@ use crate::{ExprNode, TypeAST};
 #[derive(Clone, Debug)]
 pub struct VariableInitialization {
     targets: Vec<Arc<ExprNode>>,
-    dtype: TypeAST,
+    dtype: Type,
     // dtype: Token,
     mutable: bool,
     values: Vec<Arc<ExprNode>>,
@@ -23,7 +25,7 @@ pub struct VariableInitialization {
 
 impl VariableInitialization {
     /// Create a new VariableInitialization
-    pub fn new(targets: Vec<Arc<ExprNode>>, dtype: TypeAST, mutable: bool, values: Vec<Arc<ExprNode>>) -> VariableInitialization {
+    pub fn new(targets: Vec<Arc<ExprNode>>, dtype: Type, mutable: bool, values: Vec<Arc<ExprNode>>) -> VariableInitialization {
         VariableInitialization {
             targets,
             dtype,
