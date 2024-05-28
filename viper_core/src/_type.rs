@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, sync::Arc};
 
 
 /// Represents a type within the Abstract Syntax Tree
@@ -14,6 +14,13 @@ pub enum Type {
         args: Vec<Self>,
     },
     Procedure {
+        /// Name of the procedure
+        name: String,
+
+        params: Vec<Self>,
+
+        /// Return type of the procedure
+        return_type: Arc<Self>,
     }
 }
 
@@ -28,8 +35,16 @@ impl Display for Type {
 
                 write!(f, "{str}")
             }
-            _ => {
-                write!(f, "FUNCTION TYPEAST TODO")
+            Self::Procedure { name, ref params, return_type } => {
+                let mut str = format!("Proc_{name}");
+
+                for p in params {
+                    str += format!("_{p}").as_ref();
+                }
+
+                str += format!("_{return_type}").as_ref();
+
+                write!(f, "{str}")
             }
         }
     }

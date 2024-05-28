@@ -36,6 +36,9 @@ impl CodeBlock {
                 let sym = init.to_symbol();
                 self.scope.as_ref().borrow_mut().add_symbol(init.name(), sym);
             }
+            Expr::ProcedureDefinition(def) => {
+                self.scope.as_ref().borrow_mut().add_symbol(def.name(), def.to_symbol());
+            }
             _ => {
             }
         }

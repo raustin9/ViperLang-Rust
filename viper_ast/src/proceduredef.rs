@@ -1,6 +1,6 @@
-use std::fmt::Display;
+use std::{fmt::Display, sync::Arc};
 
-use viper_core::_type::Type;
+use viper_core::{_type::Type, source::SourceModule, span::Span, symbol::Symbol};
 
 use crate::{Binding, ExprNode, Ident};
 
@@ -55,6 +55,22 @@ impl ProcedureDef {
             body,
             ret
         }
+    }
+
+    /// Create a symbol from this declaration & definition of a procedure
+    pub fn to_symbol(&self) -> Symbol {
+        Symbol::new(
+            Arc::from(SourceModule::new_dummy()),
+            Arc::from(self.ret.clone()),
+            self.name.clone(),
+            Span::dummy(),
+            false,
+        )
+    }
+
+    /// Get the name of the procedure
+    pub fn name(&self) -> String {
+        self.name.clone()
     }
 }
 
