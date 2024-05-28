@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{fs, path::PathBuf, sync::Arc};
+use std::{cell::RefCell, fs, path::PathBuf, sync::Arc};
 use colored::*;
 
 use crate::{error::ViperError, scope::Scope};
@@ -14,14 +14,14 @@ pub struct SourceLocation {
 /// Represents a source code file
 #[derive(Clone, Debug, PartialEq)]
 pub struct SourceFile {
-    // source_code: Arc<[u8]>,
-    source_code: Arc<str>,
+    // source_code: Box<[u8]>,
+    source_code: Box<str>,
     // source_code: String,
     source_name: PathBuf,
 
     /// File-wide scope. Symbols declared at the file level
     /// are available here. 
-    scope: Arc<Scope>,
+    scope: Arc<RefCell<Scope>>,
 }
 
 
@@ -33,8 +33,8 @@ pub struct SourceModule {
 
     /// Module-wide scope. Symbols that are meant to be public 
     /// across the entire module are declared at this scope
-    scope: Arc<Scope>,
-    // files: Arc<[Arc<SourceFile>]>
+    scope: Arc<RefCell<Scope>>,
+    // files: Box<[Box<SourceFile>]>
     files: Vec<Arc<SourceFile>>,
 }
 
@@ -47,7 +47,7 @@ impl SourceModule {
         let mod_name = path.to_str()
             .expect("Unable to get name of module from path!")
             .to_owned();
-        let scope = Arc::from(Scope::new(None));
+        let scope = Arc::from(RefCell::new(Scope::new(None)));
 
         let module = SourceModule {
             path: path.clone(),
@@ -64,7 +64,7 @@ impl SourceModule {
         SourceModule {
             path: PathBuf::from(""),
             name: "DUMMY MODULE".into(),
-            scope: Arc::from(Scope::new(None)),
+            scope: Arc::from(RefCell::new(Scope::new(None))),
             files: Vec::new(),
         }
     }
@@ -76,7 +76,7 @@ impl SourceModule {
     }
 
     /// Find all the source code files within a module
-    pub fn find_files(path: &PathBuf, parent_scope: &Arc<Scope>) -> Vec<Arc<SourceFile>> {
+    pub fn find_files(path: &PathBuf, parent_scope: &Arc<RefCell<Scope>>) -> Vec<Arc<SourceFile>> {
         let paths = fs::read_dir(&path).unwrap();
         let mut files = Vec::new();
         
@@ -111,14 +111,14 @@ impl fmt::Display for SourceModule {
 
 impl SourceFile {
     /// Create a new source code file from the specified path
-    pub fn new(path: PathBuf, parent_scope: &Arc<Scope>) -> Result<SourceFile, ViperError> {
+    pub fn new(path: PathBuf, parent_scope: &Arc<RefCell<Scope>>) -> Result<SourceFile, ViperError> {
         let contents = fs::read_to_string(path.clone());
 
         match contents {
             Ok(content) => {
                 return Ok(SourceFile {
-                    source_code: Arc::from(content),
-                    scope: Arc::from(Scope::new(Some(parent_scope.clone()))), // create this file's
+                    source_code: Box::from(content),
+                    scope: Arc::from(RefCell::new(Scope::new(Some(parent_scope.clone())))), // create this file's
                                                                               // scope and set it's
                                                                               // parent scope
                     source_name: path,
@@ -133,19 +133,19 @@ impl SourceFile {
 
     pub fn new_dummy(content: &'static str, name: &'static str) -> SourceFile {
         return SourceFile {
-            source_code: Arc::from(content),
+            source_code: Box::from(content),
             source_name: PathBuf::from(name),
-            scope: Arc::from(Scope::new(None)),
+            scope: Arc::from(RefCell::new(Scope::new(None))),
         };
     }
 
     /// Return a pointer to the file's scope
-    pub fn scope(&self) -> Arc<Scope> {
+    pub fn scope(&self) -> Arc<RefCell<Scope>> {
         self.scope.clone()
     }
 
     /// Get a reference to the source code of the file
-    pub fn code(&self) -> &Arc<str> {
+    pub fn code(&self) -> &Box<str> {
         return &self.source_code;
     }
 

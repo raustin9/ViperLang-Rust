@@ -1,4 +1,4 @@
-use std::{fmt::Display, sync::Arc};
+use std::fmt::Display;
 
 use viper_core::_type::Type;
 
@@ -11,10 +11,10 @@ pub struct StructDef {
     identifier: Ident,
 
     /// The fields contained in the struct
-    fields: Arc<[StructField]>,
+    fields: Box<[StructField]>,
 
     /// The class methods
-    methods: Arc<[StructMethod]>,
+    methods: Box<[StructMethod]>,
 
     visibility: Visibility,
 }
@@ -23,8 +23,8 @@ impl StructDef {
     /// Create a new [StructDef] object
     pub fn new(
         identifier: Ident, 
-        fields: Arc<[StructField]>, 
-        methods: Arc<[StructMethod]>,
+        fields: Box<[StructField]>, 
+        methods: Box<[StructMethod]>,
         visibility: Visibility,
     ) -> StructDef {
         StructDef {
@@ -90,8 +90,8 @@ impl Display for StructField {
 #[derive(Clone, Debug)]
 pub struct StructMethod {
     name: Ident,
-    parameters: Arc<[Binding]>,
-    body: Arc<ExprNode>,
+    parameters: Box<[Binding]>,
+    body: Box<ExprNode>,
     ret: Type,
     visibility: Visibility,
     is_static: bool,
@@ -101,8 +101,8 @@ impl StructMethod {
     /// Create a new [StructMethod]
     pub fn new(
         name: Ident, 
-        parameters: Arc<[Binding]>, 
-        body: Arc<ExprNode>,
+        parameters: Box<[Binding]>, 
+        body: Box<ExprNode>,
         ret: Type,
         visibility: Visibility,
         is_static: bool,

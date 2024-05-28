@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{cell::RefCell, collections::HashMap, sync::Arc};
 
 use crate::symbol::Symbol;
 
@@ -11,12 +11,12 @@ pub struct Scope {
    
     /// Pointer to the parent [Scope] that contains this scope
     /// None if there is not a parent scope
-    parent: Option<Arc<Scope>>,
+    parent: Option<Arc<RefCell<Scope>>>,
 }
 
 impl Scope {
     /// Create a new [Scope] object with the parent specified
-    pub fn new(parent: Option<Arc<Scope>>) -> Scope {
+    pub fn new(parent: Option<Arc<RefCell<Scope>>>) -> Scope {
         Scope {
             symbol_map: HashMap::new(),
             parent
@@ -26,5 +26,14 @@ impl Scope {
     /// Insert a symbol into the Scope at the given key
     pub fn add_symbol(&mut self, key: String, symbol: Symbol) {
         self.symbol_map.insert(key, symbol);
+    }
+
+    /// Print the values in this table and all tables within this one
+    pub fn print(&self, prefix: &str) {
+        println!("Symbol Table:");
+        for (ref key, ref sym) in &self.symbol_map {
+            println!("{prefix}{key}: {sym}");
+        }
+        println!("End Table.");
     }
 }

@@ -1,6 +1,6 @@
 use std::{fmt::Display, sync::Arc};
 
-use viper_core::_type::Type;
+use viper_core::{_type::Type, source::SourceModule, span::Span, symbol::Symbol};
 
 use crate::ExprNode;
 
@@ -16,22 +16,38 @@ use crate::ExprNode;
 /// -> Declare i j and k and init them to 1, 2 and 4 respectively.
 #[derive(Clone, Debug)]
 pub struct VariableInitialization {
-    targets: Vec<Arc<ExprNode>>,
+    targets: Vec<Box<ExprNode>>,
     dtype: Type,
     // dtype: Token,
     mutable: bool,
-    values: Vec<Arc<ExprNode>>,
+    values: Vec<Box<ExprNode>>,
 }
 
 impl VariableInitialization {
     /// Create a new VariableInitialization
-    pub fn new(targets: Vec<Arc<ExprNode>>, dtype: Type, mutable: bool, values: Vec<Arc<ExprNode>>) -> VariableInitialization {
+    pub fn new(targets: Vec<Box<ExprNode>>, dtype: Type, mutable: bool, values: Vec<Box<ExprNode>>) -> VariableInitialization {
         VariableInitialization {
             targets,
             dtype,
             mutable,
             values,
         }
+    }
+
+    /// Create and return a symbol to insert into a symbol table
+    /// from the information in this declaration
+    pub fn to_symbol(&self) -> Symbol {
+        Symbol::new(
+            Arc::from(SourceModule::new_dummy()),
+            Arc::from(self.dtype.clone()), 
+            self.targets[0].to_string(), 
+            Span::dummy(), 
+            self.mutable
+        )
+    }
+
+    pub fn name(&self) -> String {
+        self.targets[0].to_string().clone()
     }
 }
 

@@ -1,8 +1,8 @@
-use std::{ffi::OsStr, fs, path::PathBuf, sync::Arc};
+use std::{cell::RefCell, ffi::OsStr, fs, path::PathBuf, sync::Arc};
 use colored::*;
-use viper_core::{scope::Scope, source::{SourceFile, SourceModule}, token::Token};
+use viper_core::{scope::Scope, source::{SourceFile, SourceModule}};
 
-use viper_lexer::lexer::Lexer;
+// use viper_lexer::lexer::Lexer;
 use viper_parser::Parser;
 
 #[derive(Clone, PartialEq)]
@@ -75,7 +75,7 @@ impl BuildSystem {
             }
 
             None => {
-                let file = SourceFile::new(self.path.clone(), &Arc::from(Scope::new(None)));
+                let file = SourceFile::new(self.path.clone(), &Arc::from(RefCell::new(Scope::new(None))));
                 match file {
                     Ok(source_file) => {
                         let file_ptr = Arc::new(source_file);
@@ -111,17 +111,6 @@ impl BuildSystem {
         
         let stmt = parser.parse_top_level().unwrap();
         println!("{}", stmt);
-
-//        let mut lexer = Lexer::new(file);
-//        lexer.print_test();
-//        let mut tok = lexer.next_token();
-//        while tok != Token::EOF {
-//            println!(
-//                "{}",
-//                format!("Test Token1: {}", tok).bright_white()
-//            );
-//            tok = lexer.next_token();
-//        }
     }
 }
 

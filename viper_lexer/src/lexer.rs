@@ -256,6 +256,7 @@ impl<'a> Lexer<'a> {
             '/' => {
                 match self.peek_char() {
                     // TODO: Read comments
+                    //       should they be tokens?
                     '=' => {
                         self.read_char();
                         let start_line = self.line_number.clone();

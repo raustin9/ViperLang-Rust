@@ -1,8 +1,8 @@
 pub mod test;
 
-use std::sync::Arc;
+use std::{sync::Arc, rc::Rc, cell::RefCell};
 
-use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, FieldInit, ObjInit, ProcedureCall, ProcedureDef, ProcedureKind, StructDef, StructField, StructMethod, UnaryOperator, VariableInitialization, Visibility, WhileLoop};
+use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, FieldInit, ObjInit, ProcedureCall, ProcedureDef, StructDef, StructField, StructMethod, UnaryOperator, VariableInitialization, Visibility, WhileLoop};
 use viper_core::{error::ViperError, scope::Scope,  source::SourceFile, span::Span, _type::Type, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
@@ -20,7 +20,7 @@ pub struct Parser<'a> {
     current_token: Token,
 
     /// Lookahead token for parsing
-    peek_token: Token,
+    _peek_token: Token,
 }
 
 impl<'a> Parser<'a> {
@@ -30,7 +30,7 @@ impl<'a> Parser<'a> {
             lexer: Lexer::new(source),
             source_file: source,
             current_token: Token::EOF,
-            peek_token: Token::EOF,
+            _peek_token: Token::EOF,
         }
     }
 
@@ -151,8 +151,8 @@ impl<'a> Parser<'a> {
         return Ok(ExprNode::new(
             Expr::StructDef(StructDef::new(
                     ident, 
-                    Arc::from(fields.as_slice()), 
-                    Arc::from(methods.as_slice()),
+                    Box::from(fields.as_slice()), 
+                    Box::from(methods.as_slice()),
                     struct_vis,
                 )), 
             Span::dummy()
@@ -202,8 +202,8 @@ impl<'a> Parser<'a> {
 
         return Ok(StructMethod::new(
             ident, 
-            Arc::from(params.as_slice()), 
-            Arc::from(body), 
+            Box::from(params.as_slice()), 
+            Box::from(body), 
             ret, 
             vis, 
             is_static
@@ -324,7 +324,7 @@ impl<'a> Parser<'a> {
         
         let expr = self.parse_expr().unwrap();
 
-        return Ok(ExprNode::new(Expr::UnaryOperation(operator, Arc::from(expr)), Span::dummy()));
+        return Ok(ExprNode::new(Expr::UnaryOperation(operator, Box::from(expr)), Span::dummy()));
     }
 
     /// Parse a variable declaration statement
@@ -346,10 +346,10 @@ impl<'a> Parser<'a> {
         return Ok(
             ExprNode::new(
                 Expr::Let(VariableInitialization::new(
-                    vec!(Arc::from(ident_expr.unwrap())),
+                    vec!(Box::from(ident_expr.unwrap())),
                     dtype,
                     false,
-                    vec!(Arc::from(expr))
+                    vec!(Box::from(expr))
                 )),
                 Span::dummy()
             )
@@ -357,7 +357,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parse expressions that are meant to stand alone 
-    fn parse_expr_stmt(&mut self, scope: Arc<Scope>) -> Result<ExprNode, ViperError> {
+    fn parse_expr_stmt(&mut self, scope: Arc<RefCell<Scope>>) -> Result<ExprNode, ViperError> {
         match &self.current_token {
             Token::Keyword(kind, _span) => {
                 match kind {
@@ -415,14 +415,14 @@ impl<'a> Parser<'a> {
     /// } elif <condition> {
     /// } else {
     /// }
-    fn parse_if(&mut self, parent: Arc<Scope>, expected: KeywordKind) -> Result<ExprNode, ViperError> {
+    fn parse_if(&mut self, parent: Arc<RefCell<Scope>>, expected: KeywordKind) -> Result<ExprNode, ViperError> {
         self.expect_keyword(expected)?;
 
 
         // We only want to parse a condition if we are an `if` or `elif` expr.
         // If we are an `else` expr, there is no condition to be evaluated
         let condition = if KeywordKind::Else != expected {
-            Some(Arc::from(self.parse_expr()?))
+            Some(Rc::from(RefCell::new(self.parse_expr()?)))
         } else {
             None
         };
@@ -434,10 +434,10 @@ impl<'a> Parser<'a> {
                 match kind {
                     KeywordKind::Elif => {
                         println!("ELIF");
-                        Some(Arc::from(self.parse_if(parent.clone(), KeywordKind::Elif)?))
+                        Some(Rc::from(RefCell::new(self.parse_if(parent, KeywordKind::Elif)?)))
                     }
                     KeywordKind::Else => {
-                        Some(Arc::from(self.parse_if(parent.clone(), KeywordKind::Else)?))
+                        Some(Rc::from(RefCell::new(self.parse_if(parent, KeywordKind::Else)?)))
                     }
                     _ => {
                         None
@@ -452,7 +452,7 @@ impl<'a> Parser<'a> {
         return Ok(ExprNode::new(
             Expr::If(Conditional::new(
                 condition,
-                Arc::from(body),
+                Rc::from(body),
                 else_clause,
             )),
             Span::dummy()
@@ -462,12 +462,11 @@ impl<'a> Parser<'a> {
     /// Parse a conditional while loop for Viper
     /// `while [condition] {...}`
     /// `while 1 == 2-1 {...}`
-    fn parse_while_loop(&mut self, parent: Arc<Scope>) -> Result<ExprNode, ViperError> {
+    fn parse_while_loop(&mut self, parent: Arc<RefCell<Scope>>) -> Result<ExprNode, ViperError> {
         self.expect_keyword(KeywordKind::While)?;
 
-        let condition = Arc::from(self.parse_expr()?);
-
-        let body = Arc::from(self.parse_expr_block(Some(parent.clone()))?);
+        let condition = Box::from(self.parse_expr()?);
+        let body = Box::from(self.parse_expr_block(Some(Arc::from(parent)))?);
 
         return Ok(ExprNode::new(Expr::WhileLoop(WhileLoop::new(condition, body)), Span::dummy()));
     }
@@ -491,7 +490,7 @@ impl<'a> Parser<'a> {
         self.expect_keyword(KeywordKind::Return)?;
 
         let expr = self.parse_expr()?;
-        return Ok(ExprNode::new(Expr::Return(Arc::from(expr)) ,Span::dummy()));
+        return Ok(ExprNode::new(Expr::Return(Box::from(expr)) ,Span::dummy()));
     }
 
     /// Parse a yield expression in Viper
@@ -501,7 +500,7 @@ impl<'a> Parser<'a> {
         self.expect_keyword(KeywordKind::Yield)?;
         let expr = self.parse_expr()?;
         
-        return Ok(ExprNode::new(Expr::Yield(Arc::from(expr)), Span::dummy()));
+        return Ok(ExprNode::new(Expr::Yield(Box::from(expr)), Span::dummy()));
     }
 
     /// Parse a procedure definition
@@ -550,8 +549,8 @@ impl<'a> Parser<'a> {
         Ok(ExprNode::new(Expr::ProcedureDefinition(
             ProcedureDef::new(
                 ident.clone(), 
-                Arc::from(params.as_slice()), 
-                Arc::from(body), 
+                Box::from(params.as_slice()), 
+                Box::from(body), 
                 ret.clone(),
             )
         ), Span::dummy()))
@@ -566,15 +565,37 @@ impl<'a> Parser<'a> {
     /// is what the 'yield' keyword specifies.
     /// If no expression is yielded, then it yields
     /// the () unit type
-    fn parse_expr_block(&mut self, parent: Option<Arc<Scope>>) -> Result<ExprNode, ViperError> {
+    fn parse_expr_block(&mut self, parent: Option<Arc<RefCell<Scope>>>) -> Result<ExprNode, ViperError> {
         self.expect_punctuator(PunctuatorKind::LSquirly)?;
-        let mut block = CodeBlock::new(parent);
+        let mut exprs = Vec::new();
+        let scope = Arc::from(RefCell::new(Scope::new(parent)));
       
         // Read the expressions within the block
         while self.current_token != PunctuatorKind::RSquirly {
-            block.add_expr(self.parse_expr_stmt(block.scope()).unwrap());
+            match self.parse_expr_stmt(scope.clone()) {
+                Ok(expr) => {
+                    match expr.inner() {
+                        Expr::Let(init) => {
+                            let sym = init.to_symbol();
+                            scope.borrow_mut().add_symbol(sym.get_key(), sym);
+                            exprs.push(expr);
+                        }
+
+                        _ => {
+                            exprs.push(expr);
+                        }
+                    }
+                }
+
+                Err(err) => {
+                    return Err(err);
+                }
+            }
+            // block.add_expr(self.parse_expr_stmt(block.scope()).unwrap());
         }
         self.expect_punctuator(PunctuatorKind::RSquirly)?;
+        let block = CodeBlock::new(exprs, scope);
+
 
         Ok(ExprNode::new(Expr::CodeBlock(block), Span::dummy()))
     }
@@ -626,7 +647,7 @@ impl<'a> Parser<'a> {
             None => {
                 return Ok(
                     ExprNode::new(
-                        Expr::BinaryOperation(BinaryOperator::from(op.clone()), Arc::from(lhs.clone()), Arc::from(rhs)), 
+                        Expr::BinaryOperation(BinaryOperator::from(op.clone()), Box::from(lhs.clone()), Box::from(rhs)), 
                         Span::dummy()
                     )
                 );
@@ -639,7 +660,7 @@ impl<'a> Parser<'a> {
 
         return Ok(
             ExprNode::new(
-                Expr::BinaryOperation(BinaryOperator::from(op.clone()), Arc::from(lhs.clone()), Arc::from(rhs)), 
+                Expr::BinaryOperation(BinaryOperator::from(op.clone()), Box::from(lhs.clone()), Box::from(rhs)), 
                 Span::dummy()
             )
         );
@@ -651,7 +672,7 @@ impl<'a> Parser<'a> {
             // We are... Parse an identifier expression
             Token::Identifier(ident, span) => {
                 self.advance()?;
-                let mut args: Vec<Arc<ExprNode>> = Vec::new();
+                let mut args: Vec<Box<ExprNode>> = Vec::new();
 
                 // Switch on the types of tokens to see what type of 
                 // expression we should be parsing
@@ -666,7 +687,7 @@ impl<'a> Parser<'a> {
                                 while &self.current_token != PunctuatorKind::RParen {
                                     match self.parse_expr() {
                                         Ok(expr) => {
-                                            args.push(Arc::from(expr));
+                                            args.push(Box::from(expr));
                                         }
                                         Err (_err) =>{
                                             // If this errors assume that we did not parse an expression,
@@ -693,7 +714,7 @@ impl<'a> Parser<'a> {
 
                                 // Return function call expression
                                 return Ok(ExprNode::new(
-                                        Expr::ProcedureCall(Arc::from(ProcedureCall::new(ident, args))), 
+                                        Expr::ProcedureCall(Box::from(ProcedureCall::new(ident, args))), 
                                         span
                                 ));
                             }
@@ -717,7 +738,7 @@ impl<'a> Parser<'a> {
                                     let field_expr = self.parse_expr()?;
                                     
                                     field_inits.push(
-                                        FieldInit::new(field_name, Arc::from(field_expr))
+                                        FieldInit::new(field_name, field_expr)
                                     );
 
 

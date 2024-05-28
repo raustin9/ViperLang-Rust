@@ -1,4 +1,4 @@
-use std::{fmt::Display, sync::Arc};
+use std::fmt::Display;
 
 
 /// Represents a type within the Abstract Syntax Tree

@@ -1,15 +1,15 @@
-use std::{fmt::Display, sync::Arc};
+use std::fmt::Display;
 use crate::ExprNode;
 
 #[derive(Clone, Debug)]
 pub struct ProcedureCall {
     name: String,
-    arguments: Vec<Arc<ExprNode>>,
+    arguments: Vec<Box<ExprNode>>,
 }
 
 impl ProcedureCall {
     /// Create a new node for a procedure call
-    pub fn new(name: String, arguments: Vec<Arc<ExprNode>>) -> ProcedureCall {
+    pub fn new(name: String, arguments: Vec<Box<ExprNode>>) -> ProcedureCall {
         ProcedureCall {
             name,
             arguments,

@@ -1,16 +1,16 @@
-use std::{fmt::Display, sync::Arc};
+use std::fmt::Display;
 
-use crate::{ExprNode};
+use crate::ExprNode;
 
 /// Represents a while loop in the Viper programming language
 #[derive(Clone, Debug)]
 pub struct WhileLoop {
-    condition: Arc<ExprNode>,
+    condition: Box<ExprNode>,
 
     /// The [CodeBlock] that contains the body
     /// of code to be executed while the condition
     /// holds true
-    body: Arc<ExprNode>,
+    body: Box<ExprNode>,
 }
 
 impl Display for WhileLoop {
@@ -20,7 +20,7 @@ impl Display for WhileLoop {
 }
 
 impl WhileLoop {
-    pub fn new(condition: Arc<ExprNode>, body: Arc<ExprNode>) -> WhileLoop {
+    pub fn new(condition: Box<ExprNode>, body: Box<ExprNode>) -> WhileLoop {
         WhileLoop {
             condition,
             body,

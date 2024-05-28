@@ -1,4 +1,4 @@
-use std::{fmt::Display, sync::Arc};
+use std::fmt::Display;
 
 use crate::{ExprNode, Ident};
 
@@ -40,11 +40,11 @@ impl Display for ObjInit {
 #[derive(Clone, Debug)]
 pub struct FieldInit {
     name: Ident,
-    value: Arc<ExprNode>,
+    value: ExprNode,
 }
 
 impl FieldInit {
-    pub fn new(name: Ident, value: Arc<ExprNode>) -> FieldInit {
+    pub fn new(name: Ident, value: ExprNode) -> FieldInit {
         FieldInit {
             name,
             value,

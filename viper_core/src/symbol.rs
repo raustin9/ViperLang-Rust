@@ -8,17 +8,23 @@ pub struct Symbol {
     name: String,
     dtype: Arc<Type>,
     span: Span,
+    is_mutable: bool,
 }
 
 impl Symbol {
     /// Create a new symbol
-    pub fn new(module: Arc<SourceModule>, dtype: Arc<Type>, name: String, span: Span) -> Symbol {
+    pub fn new(module: Arc<SourceModule>, dtype: Arc<Type>, name: String, span: Span, is_mutable: bool) -> Symbol {
         Symbol {
             module,
             name,
             dtype,
             span,
+            is_mutable,
         }
+    }
+
+    pub fn get_key(&self) -> String {
+        self.name.clone()
     }
 }
 

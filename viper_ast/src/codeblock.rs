@@ -1,4 +1,4 @@
-use std::{fmt::Display, sync::Arc};
+use std::{cell::RefCell, fmt::Display, sync::Arc};
 use viper_core::scope::Scope;
 
 use crate::{Expr, ExprNode};
@@ -17,15 +17,15 @@ pub struct CodeBlock {
     exprs: Vec<ExprNode>,
 
     /// The scope that contains this block of code
-    scope: Arc<Scope>,
+    scope: Arc<RefCell<Scope>>,
 }
 
 impl CodeBlock {
     /// Create a new [CodeBlock] structure.
-    pub fn new(parent: Option<Arc<Scope>>) -> CodeBlock {
+    pub fn new(exprs: Vec<ExprNode>, scope: Arc<RefCell<Scope>>) -> CodeBlock {
         CodeBlock {
-            exprs: Vec::new(),
-            scope: Arc::from(Scope::new(parent)),
+            exprs,
+            scope,
         }
     }
 
@@ -33,7 +33,8 @@ impl CodeBlock {
     pub fn add_expr(&mut self, expr: ExprNode) {
         match expr.inner() {
             Expr::Let(init) => {
-                // TODO: add symbol here
+                let sym = init.to_symbol();
+                self.scope.as_ref().borrow_mut().add_symbol(init.name(), sym);
             }
             _ => {
             }
@@ -41,8 +42,9 @@ impl CodeBlock {
         self.exprs.push(expr);
     }
 
+
     /// Return a pointer to the scope of this [CodeBlock]
-    pub fn scope(&self) -> Arc<Scope> {
+    pub fn scope(&self) -> Arc<RefCell<Scope>> {
         self.scope.clone()
     }
 }
@@ -56,6 +58,8 @@ impl Display for CodeBlock {
         for expr in &self.exprs {
             str += format!("{};\n", expr).as_str();
         }
+
+        self.scope.as_ref().borrow().print(">> ");
 
         write!(f, "{str}")
     }

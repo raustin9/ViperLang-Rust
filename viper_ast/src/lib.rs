@@ -1,5 +1,5 @@
-use std::{fmt::Display, sync::Arc};
-use viper_core::{_type::Type, span::Span};
+use std::fmt::Display;
+use viper_core::span::Span;
 
 pub mod objinit;
 pub use objinit::*;
@@ -53,7 +53,7 @@ pub enum Visibility {
 /// Represents a node in the Abstract Syntax tree for the Viper programming language
 #[derive(Debug, Clone)]
 pub struct Node<T> {
-    span: Span,
+    _span: Span,
     inner: T,
 }
 
@@ -62,7 +62,7 @@ impl <T> Node<T> {
     pub fn new(inner: T, span: Span) -> Node<T> {
         Node {
             inner,
-            span
+            _span: span,
         }
     }
 
@@ -90,18 +90,18 @@ pub enum Expr {
     Integer(u64),
     Float(f64),
     StringLiteral(String),
-    Return(Arc<ExprNode>),
-    Yield(Arc<ExprNode>),
+    Return(Box<ExprNode>),
+    Yield(Box<ExprNode>),
     ProcedureDefinition(ProcedureDef),
     Let(VariableInitialization),
     WhileLoop(WhileLoop),
     If(Conditional),
     Identifier(String),
-    ProcedureCall(Arc<ProcedureCall>),
-    MethodCall(Arc<MethodCall>),
-    MemberFieldAccess(Arc<Field>),
-    BinaryOperation(BinaryOperator, Arc<ExprNode>, Arc<ExprNode>),
-    UnaryOperation(UnaryOperator, Arc<ExprNode>),
+    ProcedureCall(Box<ProcedureCall>),
+    MethodCall(Box<MethodCall>),
+    MemberFieldAccess(Box<Field>),
+    BinaryOperation(BinaryOperator, Box<ExprNode>, Box<ExprNode>),
+    UnaryOperation(UnaryOperator, Box<ExprNode>),
     CodeBlock(CodeBlock),
     StructDef(StructDef),
     ObjInitialization(ObjInit),

@@ -1,4 +1,4 @@
-use std::{fmt::Display, sync::Arc};
+use std::fmt::Display;
 
 use viper_core::_type::Type;
 
@@ -37,10 +37,10 @@ pub struct ProcedureDef {
     name: Ident,
 
     /// The parameter list of what needs to be passed to the procedure
-    parameters: Arc<[Binding]>,
+    parameters: Box<[Binding]>,
 
     /// The code body of the procedure
-    body: Arc<ExprNode>,
+    body: Box<ExprNode>,
 
     /// The return type of the procedure
     ret: Type,
@@ -48,7 +48,7 @@ pub struct ProcedureDef {
 
 impl ProcedureDef {
     /// Create a new [ProcedureDef] object
-    pub fn new(name: Ident, parameters: Arc<[Binding]>, body: Arc<ExprNode>, ret: Type) -> ProcedureDef {
+    pub fn new(name: Ident, parameters: Box<[Binding]>, body: Box<ExprNode>, ret: Type) -> ProcedureDef {
         ProcedureDef {
             name,
             parameters,
