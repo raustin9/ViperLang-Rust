@@ -3,7 +3,7 @@ pub mod test;
 use std::{sync::Arc, rc::Rc, cell::RefCell};
 
 use viper_ast::{BinaryOperator, Binding, CodeBlock, Conditional, Expr, ExprNode, FieldInit, ObjInit, ProcedureCall, ProcedureDef, StructDef, StructField, StructMethod, UnaryOperator, VariableInitialization, Visibility, WhileLoop};
-use viper_core::{error::ViperError, scope::Scope,  source::SourceFile, span::Span, _type::Type, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
+use viper_core::{_type::Type, error::ViperError, scope::Scope, source::SourceFile, span::Span, symbol::Symbol, token::{KeywordKind, NumericValue, OperatorPrecedence, PunctuatorKind, Token}};
 use viper_lexer::lexer::Lexer;
 
 
